@@ -1,265 +1,426 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
-  Sparkles, 
-  LayoutDashboard, 
-  CheckCircle2, 
-  ArrowRight, 
-  Code2, 
-  Database, 
-  Layers, 
-  Lightbulb, 
-  Rocket, 
-  MessageSquare,
-  Wand2
+  BarChart3, 
+  ListOrdered, 
+  Compass, 
+  Table, 
+  FileSpreadsheet, 
+  Download, 
+  Info,
+  Layers,
+  Sparkles,
+  School
 } from 'lucide-react';
+import { ALL_QUESTIONS, SCALE_DEFINITIONS } from './data/surveyDefinitions';
+import { RespondentRecord, ScaleDefinition } from './types/survey';
+import { generateRealisticSampleDataset } from './utils/sampleDataGenerator';
+import { 
+  calculateGroupStats, 
+  buildComparisonList 
+} from './utils/statistics';
+import { exportSummaryToExcel } from './utils/excelParser';
+import { Header } from './components/Header';
+import { GroupFilterBar, FilterMode } from './components/GroupFilterBar';
+import { ComparisonOverview } from './components/ComparisonOverview';
+import { QuestionsExplorer } from './components/QuestionsExplorer';
+import { ScaleDetailModal } from './components/ScaleDetailModal';
+import { ExcelUploadModal } from './components/ExcelUploadModal';
+import { PedagogicalInsights } from './components/PedagogicalInsights';
+import { OfflineIndicator } from './components/OfflineIndicator';
 
 export default function App() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('alle');
-  const [quickIdea, setQuickIdea] = useState<string>('');
-  const [submittedIdea, setSubmittedIdea] = useState<string | null>(null);
+  // Dataset state
+  const [records, setRecords] = useState<RespondentRecord[]>(() => {
+    const saved = localStorage.getItem('zr_custom_records');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        // Fallback
+      }
+    }
+    return generateRealisticSampleDataset();
+  });
 
-  const categories = [
-    { id: 'alle', name: 'Alles' },
-    { id: 'dashboard', name: 'Dashboards & Beheer' },
-    { id: 'productiviteit', name: 'Productiviteit & Taken' },
-    { id: 'tools', name: 'Interactieve Tools' },
-    { id: 'creatief', name: 'Creatief & Portfolio' },
-  ];
+  const [isCustomData, setIsCustomData] = useState<boolean>(() => {
+    return localStorage.getItem('zr_is_custom') === 'true';
+  });
 
-  const projectIdeas = [
-    {
-      id: '1',
-      title: 'Modern Dashboard & Analytics',
-      desc: 'Realtime statistieken, visuele grafieken, tabellen en overzichtelijke KPI-kaarten.',
-      category: 'dashboard',
-      icon: LayoutDashboard,
-      badge: 'Populair',
-      color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200 dark:border-blue-800',
-    },
-    {
-      id: '2',
-      title: 'Takenbeheer & Kanban Board',
-      desc: 'Projectplanner met drag & drop kolommen, deadlines, labels en filters.',
-      category: 'productiviteit',
-      icon: CheckCircle2,
-      badge: 'Productief',
-      color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800',
-    },
-    {
-      id: '3',
-      title: 'Slimme Formulier- of Rekentool',
-      desc: 'Offertegenerator, budgetplanner of aangepaste berekeningen met directe export.',
-      category: 'tools',
-      icon: Code2,
-      badge: 'Handig',
-      color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-200 dark:border-amber-800',
-    },
-    {
-      id: '4',
-      title: 'Database & Klantenoverzicht (CRM)',
-      desc: 'Beheer contacten, statussen, notities en interacties in een soepele interface.',
-      category: 'dashboard',
-      icon: Database,
-      badge: 'Zakelijk',
-      color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-200 dark:border-purple-800',
-    },
-    {
-      id: '5',
-      title: 'Interactieve Showcase of Portfolio',
-      desc: 'Visuele presentatie van projecten, galerij met filters en stijlvolle typografie.',
-      category: 'creatief',
-      icon: Wand2,
-      badge: 'Design',
-      color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-200 dark:border-rose-800',
-    },
-    {
-      id: '6',
-      title: 'Geheugen & Studie / Flashcard Tool',
-      desc: 'Interactieve quizzen, spaced repetition en voortgangsstatistieken.',
-      category: 'productiviteit',
-      icon: Lightbulb,
-      badge: 'Leren',
-      color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800',
-    },
-  ];
+  const [customFileName, setCustomFileName] = useState<string>(() => {
+    return localStorage.getItem('zr_filename') || '';
+  });
 
-  const filteredIdeas = selectedCategory === 'alle' 
-    ? projectIdeas 
-    : projectIdeas.filter(idea => idea.category === selectedCategory);
+  // Filter state
+  const [filterMode, setFilterMode] = useState<FilterMode>('student');
+  const [selectedStudentNumber, setSelectedStudentNumber] = useState<string>('');
+  const [showBenchmark, setShowBenchmark] = useState<boolean>(true);
 
-  const handleSubmitIdea = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!quickIdea.trim()) return;
-    setSubmittedIdea(quickIdea.trim());
-    setQuickIdea('');
+  // Tab navigation state
+  const [activeMainTab, setActiveMainTab] = useState<'schalen' | 'vragen' | 'advies' | 'data'>('schalen');
+
+  // Modals state
+  const [selectedScale, setSelectedScale] = useState<ScaleDefinition | null>(null);
+  const [uploadModalOpen, setUploadModalOpen] = useState<boolean>(false);
+
+  // Extract distinct student numbers (all groups except "HAN")
+  const studentNumbers = useMemo(() => {
+    const nums = new Set<string>();
+    records.forEach((r) => {
+      if (r.group.toUpperCase() !== 'HAN') {
+        nums.add(r.group);
+      }
+    });
+    return Array.from(nums).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }, [records]);
+
+  // Set default student number if not set
+  useEffect(() => {
+    if (!selectedStudentNumber && studentNumbers.length > 0) {
+      setSelectedStudentNumber(studentNumbers[0]);
+    }
+  }, [studentNumbers, selectedStudentNumber]);
+
+  // Partition records
+  const hanRecords = useMemo(() => {
+    return records.filter((r) => r.group.toUpperCase() === 'HAN');
+  }, [records]);
+
+  const allPupilRecords = useMemo(() => {
+    return records.filter((r) => r.group.toUpperCase() !== 'HAN');
+  }, [records]);
+
+  const ownGroupRecords = useMemo(() => {
+    return records.filter((r) => r.group === selectedStudentNumber);
+  }, [records, selectedStudentNumber]);
+
+  // Compute Statistics
+  const totalStats = useMemo(() => {
+    return calculateGroupStats(
+      allPupilRecords,
+      'Totaal Leerlingen',
+      'Totaal alle leerlingen',
+      SCALE_DEFINITIONS
+    );
+  }, [allPupilRecords]);
+
+  const hanStats = useMemo(() => {
+    return calculateGroupStats(
+      hanRecords,
+      'HAN',
+      'Groep "HAN" (Docenten in opleiding)',
+      SCALE_DEFINITIONS
+    );
+  }, [hanRecords]);
+
+  const ownGroupStats = useMemo(() => {
+    if (!selectedStudentNumber) return null;
+    return calculateGroupStats(
+      ownGroupRecords,
+      selectedStudentNumber,
+      `Klas (${selectedStudentNumber})`,
+      SCALE_DEFINITIONS
+    );
+  }, [ownGroupRecords, selectedStudentNumber]);
+
+  // Active statistics according to current selected mode
+  const activeStats = useMemo(() => {
+    if (filterMode === 'han') return hanStats;
+    if (filterMode === 'student') return ownGroupStats || totalStats;
+    return totalStats;
+  }, [filterMode, hanStats, ownGroupStats, totalStats]);
+
+  // Comparison benchmark list
+  const comparisonData = useMemo(() => {
+    return buildComparisonList(ownGroupStats, totalStats, hanStats, SCALE_DEFINITIONS);
+  }, [ownGroupStats, totalStats, hanStats]);
+
+  // Selected comparison item for modal
+  const selectedComparisonItem = useMemo(() => {
+    if (!selectedScale) return null;
+    return comparisonData.find((item) => item.scaleId === selectedScale.id) || null;
+  }, [selectedScale, comparisonData]);
+
+  // Handlers
+  const handleDataLoaded = (newRecords: RespondentRecord[], fileName: string) => {
+    setRecords(newRecords);
+    setIsCustomData(true);
+    setCustomFileName(fileName);
+    localStorage.setItem('zr_custom_records', JSON.stringify(newRecords));
+    localStorage.setItem('zr_is_custom', 'true');
+    localStorage.setItem('zr_filename', fileName);
+
+    // Auto select first student number
+    const newStudentNums = Array.from(
+      new Set(newRecords.filter((r) => r.group.toUpperCase() !== 'HAN').map((r) => r.group))
+    );
+    if (newStudentNums.length > 0) {
+      setSelectedStudentNumber(newStudentNums[0]);
+    }
+  };
+
+  const handleResetToSample = () => {
+    const sample = generateRealisticSampleDataset();
+    setRecords(sample);
+    setIsCustomData(false);
+    setCustomFileName('');
+    localStorage.removeItem('zr_custom_records');
+    localStorage.removeItem('zr_is_custom');
+    localStorage.removeItem('zr_filename');
+    setSelectedStudentNumber('304918');
+  };
+
+  const handleExportExcel = () => {
+    const currentName = filterMode === 'student' ? `Student_${selectedStudentNumber}` : filterMode === 'han' ? 'HAN' : 'Totaal';
+    exportSummaryToExcel(comparisonData, currentName);
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900">
-      {/* Header */}
-      <header className="border-b border-slate-200 bg-white/80 backdrop-blur sticky top-0 z-40">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-blue-600 text-white flex items-center justify-center font-bold shadow-sm shadow-blue-500/20">
-              <Rocket className="w-5 h-5" />
-            </div>
-            <div>
-              <span className="font-semibold text-slate-900 block leading-tight">Mijn Studio App</span>
-              <span className="text-xs text-slate-500 block">Klaar voor ontwikkeling</span>
-            </div>
-          </div>
-          <div className="flex items-center gap-2 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 px-3 py-1.5 rounded-full">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-            Nederlands actief
-          </div>
-        </div>
-      </header>
+    <div className="min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900 pb-16">
+      {/* App Header */}
+      <Header
+        isCustomData={isCustomData}
+        fileName={customFileName}
+        totalRespondents={records.length}
+        onOpenUpload={() => setUploadModalOpen(true)}
+        onResetToSample={handleResetToSample}
+        onExportExcel={handleExportExcel}
+      />
 
-      {/* Hero section */}
-      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-12">
-        <div className="max-w-2xl mb-12">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 border border-blue-200 text-blue-700 text-xs font-medium mb-4">
-            <Sparkles className="w-3.5 h-3.5" />
-            Welkom! Waar kunnen we je mee helpen?
+      {/* Main Container */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
+        {/* Intro banner */}
+        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-5 sm:p-6 rounded-2xl shadow-sm">
+          <div>
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-[11px] font-semibold text-blue-200 mb-2">
+              <Sparkles className="w-3.5 h-3.5" />
+              Zelfregulerend Leren Analyseplatform
+            </span>
+            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
+              Analyse & Vergelijking Vragenlijst
+            </h2>
+            <p className="text-xs sm:text-sm text-blue-100/90 mt-1 max-w-2xl">
+              Analyseer de 15 schalen en 75 stellingen. Sorteer op jouw eigen studentnummer, bekijk de landelijke benchmark of vergelijk direct met de docentgroep (HAN).
+            </p>
           </div>
-          <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-slate-900 mb-4">
-            Hoi! Wat wil je vandaag <span className="text-blue-600">bouwen</span>?
-          </h1>
-          <p className="text-lg text-slate-600 leading-relaxed">
-            De omgeving staat helemaal klaar in het Nederlands. Vertel me gerust wat voor applicatie, functionaliteit of ontwerp je wilt realiseren, dan ga ik direct voor je aan de slag.
-          </p>
-        </div>
 
-        {/* Snelle prompt input box */}
-        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mb-12">
-          <div className="flex items-center gap-2 mb-3 text-slate-800 font-semibold text-base">
-            <MessageSquare className="w-5 h-5 text-blue-600" />
-            Beschrijf je idee of wens
-          </div>
-          <form onSubmit={handleSubmitIdea} className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              value={quickIdea}
-              onChange={(e) => setQuickIdea(e.target.value)}
-              placeholder="Bijv. Maak een dashboard voor mijn urenregistratie met grafieken..."
-              className="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 text-slate-900 placeholder-slate-400 text-sm"
-            />
+          <div className="flex items-center gap-3 shrink-0">
             <button
-              type="submit"
-              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm rounded-xl transition-colors shadow-sm cursor-pointer"
+              onClick={() => setUploadModalOpen(true)}
+              className="px-4 py-2.5 rounded-xl bg-white text-blue-950 font-bold text-xs hover:bg-blue-50 transition shadow-sm cursor-pointer"
             >
-              Idee vastleggen
-              <ArrowRight className="w-4 h-4" />
+              Eigen Excel Inlezen
             </button>
-          </form>
+          </div>
+        </div>
 
-          {submittedIdea && (
-            <div className="mt-4 p-4 rounded-xl bg-blue-50 border border-blue-200 text-sm text-blue-900 flex items-start gap-3">
-              <Sparkles className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+        {/* Filter balk (Eigen groep / Totaal / HAN) */}
+        <GroupFilterBar
+          mode={filterMode}
+          selectedStudentNumber={selectedStudentNumber}
+          studentNumbers={studentNumbers}
+          totalCount={allPupilRecords.length}
+          hanCount={hanRecords.length}
+          ownCount={ownGroupRecords.length}
+          showBenchmark={showBenchmark}
+          onModeChange={setFilterMode}
+          onStudentNumberChange={setSelectedStudentNumber}
+          onToggleBenchmark={setShowBenchmark}
+        />
+
+        {/* Tab navigatie */}
+        <div className="flex items-center gap-2 border-b border-slate-200 pb-3 mb-6 overflow-x-auto">
+          <button
+            onClick={() => setActiveMainTab('schalen')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap ${
+              activeMainTab === 'schalen'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <BarChart3 className="w-4 h-4" />
+            <span>15 Schalen Analyse</span>
+          </button>
+
+          <button
+            onClick={() => setActiveMainTab('vragen')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap ${
+              activeMainTab === 'vragen'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <ListOrdered className="w-4 h-4" />
+            <span>75 Vragen Detailverkenner</span>
+          </button>
+
+          <button
+            onClick={() => setActiveMainTab('advies')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap ${
+              activeMainTab === 'advies'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Compass className="w-4 h-4" />
+            <span>Pedagogische Inzichten</span>
+          </button>
+
+          <button
+            onClick={() => setActiveMainTab('data')}
+            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap ${
+              activeMainTab === 'data'
+                ? 'bg-blue-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+            }`}
+          >
+            <Table className="w-4 h-4" />
+            <span>Respondenten ({records.length})</span>
+          </button>
+        </div>
+
+        {/* Tab 1: Schalenanalyse */}
+        {activeMainTab === 'schalen' && (
+          <div>
+            <ComparisonOverview
+              comparisonData={comparisonData}
+              scales={SCALE_DEFINITIONS}
+              currentMode={filterMode}
+              selectedStudentNumber={selectedStudentNumber}
+              showBenchmark={showBenchmark}
+              onSelectScale={(scale) => setSelectedScale(scale)}
+            />
+
+            {/* Inzichten samenvatting onderaan schalen */}
+            <PedagogicalInsights
+              comparisonData={comparisonData}
+              scales={SCALE_DEFINITIONS}
+              currentMode={filterMode}
+              selectedStudentNumber={selectedStudentNumber}
+              onSelectScale={(scale) => setSelectedScale(scale)}
+            />
+          </div>
+        )}
+
+        {/* Tab 2: Vragenlijst 75 Items */}
+        {activeMainTab === 'vragen' && (
+          <QuestionsExplorer
+            questions={ALL_QUESTIONS}
+            scales={SCALE_DEFINITIONS}
+            questionAverages={activeStats.questionAverages}
+            questionStdDevs={activeStats.questionStdDevs}
+            questionDistributions={activeStats.questionDistributions}
+            currentGroupName={
+              filterMode === 'student'
+                ? `klas (${selectedStudentNumber})`
+                : filterMode === 'han'
+                ? 'groep "HAN"'
+                : 'het totaal van alle leerlingen'
+            }
+          />
+        )}
+
+        {/* Tab 3: Pedagogische Adviezen */}
+        {activeMainTab === 'advies' && (
+          <PedagogicalInsights
+            comparisonData={comparisonData}
+            scales={SCALE_DEFINITIONS}
+            currentMode={filterMode}
+            selectedStudentNumber={selectedStudentNumber}
+            onSelectScale={(scale) => setSelectedScale(scale)}
+          />
+        )}
+
+        {/* Tab 4: Ruwe Data & Respondentenlijst */}
+        {activeMainTab === 'data' && (
+          <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs">
+            <div className="flex items-center justify-between mb-4">
               <div>
-                <p className="font-semibold">Idee genoteerd in de app:</p>
-                <p className="text-slate-700 mt-0.5">"{submittedIdea}"</p>
-                <p className="text-xs text-blue-700 mt-2 font-medium">
-                  Typ dit gerust in de chat om het direct door te laten bouwen!
+                <h3 className="text-base font-bold text-slate-900">
+                  Respondentenoverzicht
+                </h3>
+                <p className="text-xs text-slate-500">
+                  Alle ingelezen rijen uit het Invoerblad van het Excel-bestand
                 </p>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* Suggesties & Categorieën */}
-        <div className="space-y-6">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h2 className="text-xl font-bold text-slate-900">Populaire voorbeelden & concepten</h2>
-              <p className="text-sm text-slate-500">Klik op een categorie of kies een richting om te beginnen</p>
+              <button
+                onClick={handleExportExcel}
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-600" />
+                Exporteer Excel
+              </button>
             </div>
 
-            {/* Filter tags */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-2 sm:pb-0">
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => setSelectedCategory(cat.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
-                    selectedCategory === cat.id
-                      ? 'bg-slate-900 text-white shadow-sm'
-                      : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-100'
-                  }`}
-                >
-                  {cat.name}
-                </button>
-              ))}
-            </div>
-          </div>
+            <div className="overflow-x-auto max-h-[550px] border border-slate-200 rounded-xl">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-slate-100 text-slate-700 font-semibold sticky top-0 z-10">
+                  <tr>
+                    <th className="p-3 border-b border-slate-200">#</th>
+                    <th className="p-3 border-b border-slate-200">Klas / Groep</th>
+                    <th className="p-3 border-b border-slate-200">Type</th>
+                    <th className="p-3 border-b border-slate-200">Vak</th>
+                    <th className="p-3 border-b border-slate-200">Ingevulde Vragen</th>
+                    <th className="p-3 border-b border-slate-200">Gemiddelde Score</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {records.map((r, idx) => {
+                    const answeredCount = Object.keys(r.answers).length;
+                    const vals = Object.values(r.answers);
+                    const avg = vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : '-';
+                    const isHan = r.group.toUpperCase() === 'HAN';
 
-          {/* Grid van ideeën */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredIdeas.map((idea) => {
-              const Icon = idea.icon;
-              return (
-                <div
-                  key={idea.id}
-                  onClick={() => setQuickIdea(idea.title)}
-                  className="group bg-white rounded-2xl border border-slate-200 p-6 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer flex flex-col justify-between"
-                >
-                  <div>
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700 group-hover:bg-blue-600 group-hover:text-white transition-colors">
-                        <Icon className="w-5 h-5" />
-                      </div>
-                      <span className={`text-xs px-2.5 py-0.5 rounded-full font-medium border ${idea.color}`}>
-                        {idea.badge}
-                      </span>
-                    </div>
-                    <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition-colors mb-2 text-base">
-                      {idea.title}
-                    </h3>
-                    <p className="text-sm text-slate-600 leading-relaxed">
-                      {idea.desc}
-                    </p>
-                  </div>
-                  <div className="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-600 group-hover:translate-x-0.5 transition-transform">
-                    <span>Gebruik dit startpunt</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Feature highlight bar */}
-        <div className="mt-16 grid grid-cols-1 sm:grid-cols-3 gap-6 pt-10 border-t border-slate-200">
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
-              <Layers className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-sm text-slate-900">Volledig op maat</h4>
-              <p className="text-xs text-slate-500 mt-1">Elk onderdeel kan direct aangepast of uitgebreid worden.</p>
+                    return (
+                      <tr key={idx} className="hover:bg-slate-50 transition">
+                        <td className="p-3 text-slate-500">{r.id || idx + 1}</td>
+                        <td className="p-3 font-semibold text-slate-900">
+                          {r.group}
+                        </td>
+                        <td className="p-3">
+                          <span
+                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
+                              isHan
+                                ? 'bg-emerald-100 text-emerald-800'
+                                : 'bg-blue-100 text-blue-800'
+                            }`}
+                          >
+                            {isHan ? 'Docent (HAN)' : 'Leerling'}
+                          </span>
+                        </td>
+                        <td className="p-3 text-slate-600">{r.subject || 'Algemeen'}</td>
+                        <td className="p-3 text-slate-600">{answeredCount} / 75</td>
+                        <td className="p-3 font-bold text-slate-900">{avg}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           </div>
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-emerald-50 text-emerald-600">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-sm text-slate-900">Modern & Snel</h4>
-              <p className="text-xs text-slate-500 mt-1">React 19, Tailwind CSS en soepele gebruikerservaring.</p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="p-2 rounded-lg bg-purple-50 text-purple-600">
-              <Code2 className="w-5 h-5" />
-            </div>
-            <div>
-              <h4 className="font-semibold text-sm text-slate-900">Direct operationeel</h4>
-              <p className="text-xs text-slate-500 mt-1">Typ wat je nodig hebt en zie het meteen live.</p>
-            </div>
-          </div>
-        </div>
+        )}
       </main>
+
+      {/* Detail Modal voor een specifieke schaal */}
+      <ScaleDetailModal
+        scale={selectedScale}
+        comparisonItem={selectedComparisonItem}
+        questions={ALL_QUESTIONS}
+        questionAverages={activeStats.questionAverages}
+        questionStdDevs={activeStats.questionStdDevs}
+        currentMode={filterMode}
+        selectedStudentNumber={selectedStudentNumber}
+        onClose={() => setSelectedScale(null)}
+      />
+
+      {/* Excel Upload Modal */}
+      <ExcelUploadModal
+        isOpen={uploadModalOpen}
+        onClose={() => setUploadModalOpen(false)}
+        onDataLoaded={handleDataLoaded}
+      />
+
+      {/* Offline Status Toast */}
+      <OfflineIndicator />
     </div>
   );
 }

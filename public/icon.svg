@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1e3a8a" />
+      <stop offset="100%" stop-color="#2563eb" />
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#grad)" />
+  <!-- Graduation cap & analytics chart motif -->
+  <path d="M256 128L96 208L256 288L416 208L256 128Z" fill="#ffffff" />
+  <path d="M144 232V320C144 352 194 384 256 384C318 384 368 352 368 320V232L256 288L144 232Z" fill="#93c5fd" opacity="0.9" />
+  <path d="M416 208V320" stroke="#fde047" stroke-width="14" stroke-linecap="round" />
+  <circle cx="416" cy="336" r="14" fill="#fde047" />
+  <!-- Growth chart line -->
+  <path d="M192 320L236 290L276 310L320 260" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
