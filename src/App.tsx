@@ -57,6 +57,7 @@ export default function App() {
 
   // Tab navigation state
   const [activeMainTab, setActiveMainTab] = useState<'schalen' | 'vragen' | 'advies' | 'data'>('schalen');
+  const [questionsScaleFilter, setQuestionsScaleFilter] = useState<string>('all');
 
   // Modals state
   const [selectedScale, setSelectedScale] = useState<ScaleDefinition | null>(null);
@@ -171,7 +172,16 @@ export default function App() {
 
   const handleExportExcel = () => {
     const currentName = filterMode === 'student' ? `Student_${selectedStudentNumber}` : filterMode === 'han' ? 'HAN' : 'Totaal';
-    exportSummaryToExcel(comparisonData, currentName);
+    const questionRows = ALL_QUESTIONS.map((q) => ({
+      number: q.number,
+      scale: q.scale,
+      text: q.text,
+      ownScore: ownGroupStats ? (ownGroupStats.questionAverages[q.number] ?? null) : null,
+      totalScore: totalStats.questionAverages[q.number] ?? 0,
+      hanScore: hanStats.questionAverages[q.number] ?? 0,
+      stdDev: activeStats.questionStdDevs[q.number] ?? 0,
+    }));
+    exportSummaryToExcel(comparisonData, currentName, questionRows);
   };
 
   return (
@@ -309,6 +319,12 @@ export default function App() {
             questionAverages={activeStats.questionAverages}
             questionStdDevs={activeStats.questionStdDevs}
             questionDistributions={activeStats.questionDistributions}
+            totalQuestionAverages={totalStats.questionAverages}
+            hanQuestionAverages={hanStats.questionAverages}
+            currentMode={filterMode}
+            selectedStudentNumber={selectedStudentNumber}
+            showBenchmark={showBenchmark}
+            initialScaleFilter={questionsScaleFilter}
             currentGroupName={
               filterMode === 'student'
                 ? `klas (${selectedStudentNumber})`
@@ -344,11 +360,18 @@ export default function App() {
               </div>
               <button
                 onClick={handleExportExcel}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition"
+                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5 text-emerald-600" />
                 Exporteer Excel
               </button>
+            </div>
+
+            <div className="mb-4 p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-900 flex items-start gap-2.5">
+              <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+              <span>
+                <strong>Anonimiteit & Groepsniveau:</strong> Studenten die met de code <strong>"HAN"</strong> hebben ingelogd zijn anoniem samengevoegd tot één docentengroep. Individuele studenten zijn hierdoor niet te herleiden; de tool is bedoeld voor analyse op klas- en groepsniveau.
+              </span>
             </div>
 
             <div className="overflow-x-auto max-h-[550px] border border-slate-200 rounded-xl">
@@ -407,9 +430,15 @@ export default function App() {
         questions={ALL_QUESTIONS}
         questionAverages={activeStats.questionAverages}
         questionStdDevs={activeStats.questionStdDevs}
+        totalQuestionAverages={totalStats.questionAverages}
+        hanQuestionAverages={hanStats.questionAverages}
         currentMode={filterMode}
         selectedStudentNumber={selectedStudentNumber}
         onClose={() => setSelectedScale(null)}
+        onOpenInQuestionsTab={(scaleName) => {
+          setQuestionsScaleFilter(scaleName);
+          setActiveMainTab('vragen');
+        }}
       />
 
       {/* Excel Upload Modal */}

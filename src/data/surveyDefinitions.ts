@@ -2,377 +2,377 @@ import { ScaleDefinition, QuestionItem } from '../types/survey';
 
 export const ALL_QUESTIONS: QuestionItem[] = [
   {
-    "questionNumber": 1,
+    "number": 1,
     "scale": "Taakanalyse",
     "text": "Voor ik begin aan mijn schoolwerk, lees ik de opdracht goed."
   },
   {
-    "questionNumber": 2,
+    "number": 2,
     "scale": "Taakanalyse",
     "text": "Voor ik begin aan mijn schoolwerk, vraag ik me af: ‘Waarover gaat het? Wat weet ik er al over?’."
   },
   {
-    "questionNumber": 3,
+    "number": 3,
     "scale": "Taakanalyse",
     "text": "Voor ik begin aan mijn schoolwerk, vraag ik me af: ‘Herken ik dit soort opdracht?’."
   },
   {
-    "questionNumber": 4,
+    "number": 4,
     "scale": "Taakanalyse",
     "text": "Als ik een opdracht moet doen die ik al eens gedaan heb, vraag ik me af: ‘Hoe heb ik het toen gedaan? Was dat een goede manier?’."
   },
   {
-    "questionNumber": 5,
+    "number": 5,
     "scale": "Taakanalyse",
     "text": "Voor ik begin aan mijn schoolwerk, vraag ik me af: ‘Wat vind ik er van (leuk, moeilijk, interessant, …)?’."
   },
   {
-    "questionNumber": 6,
+    "number": 6,
     "scale": "Taakanalyse",
     "text": "Voor ik begin aan mijn schoolwerk, vraag ik me af: ‘Zal het mij lukken?’."
   },
   {
-    "questionNumber": 7,
+    "number": 7,
     "scale": "Planning",
     "text": "Voor ik begin aan mijn schoolwerk, kijk ik wat ik eerst ga doen en wat ik daarna ga doen."
   },
   {
-    "questionNumber": 8,
+    "number": 8,
     "scale": "Planning",
     "text": "Als ik mijn schoolwerk moeilijk vind, plan ik er meer tijd voor."
   },
   {
-    "questionNumber": 9,
+    "number": 9,
     "scale": "Planning",
     "text": "Bij een grote taak of les, begin ik enkele dagen van te voren en doe ik elke dag een stukje."
   },
   {
-    "questionNumber": 10,
+    "number": 10,
     "scale": "Planning",
     "text": "Voor ik begin aan mijn schoolwerk, kijk ik hoelang ik er aan zal werken."
   },
   {
-    "questionNumber": 11,
+    "number": 11,
     "scale": "Oppervlakkige leerstrategieën",
     "text": "Tijdens het leren, lees of zeg ik alles opnieuw tot ik het ken."
   },
   {
-    "questionNumber": 12,
+    "number": 12,
     "scale": "Oppervlakkige leerstrategieën",
     "text": "Tijdens het leren, schrijf ik alles opnieuw tot ik het ken."
   },
   {
-    "questionNumber": 13,
+    "number": 13,
     "scale": "Oppervlakkige leerstrategieën",
     "text": "Tijdens het leren, dek ik een deel van de les af en probeer ik het op te zeggen."
   },
   {
-    "questionNumber": 14,
+    "number": 14,
     "scale": "Oppervlakkige leerstrategieën",
     "text": "Tijdens het leren, herhaal ik het tot ik het helemaal ken."
   },
   {
-    "questionNumber": 15,
+    "number": 15,
     "scale": "Diepgaande leerstrategieën",
     "text": "Tijdens het leren, probeer ik wat ik moet leren na te vertellen in mijn eigen woorden."
   },
   {
-    "questionNumber": 16,
+    "number": 16,
     "scale": "Diepgaande leerstrategieën",
     "text": "Tijdens het leren, maak ik een samenvatting."
   },
   {
-    "questionNumber": 17,
+    "number": 17,
     "scale": "Diepgaande leerstrategieën",
     "text": "Tijdens het leren, gebruik ik geheugensteuntjes of trucjes om iets beter te onthouden."
   },
   {
-    "questionNumber": 18,
+    "number": 18,
     "scale": "Diepgaande leerstrategieën",
     "text": "Als ik iets nieuws leer, leg ik het verband met wat ik al van vroeger weet."
   },
   {
-    "questionNumber": 19,
+    "number": 19,
     "scale": "Diepgaande leerstrategieën",
     "text": "Ik zoek voorbeelden bij wat ik moet leren."
   },
   {
-    "questionNumber": 20,
+    "number": 20,
     "scale": "Diepgaande leerstrategieën",
     "text": "Ik maak zelf vraagjes en na het leren los ik deze vraagjes op."
   },
   {
-    "questionNumber": 21,
+    "number": 21,
     "scale": "Diepgaande leerstrategieën",
     "text": "Tijdens het leren, maak ik een schema of een mind map (woordenspin)."
   },
   {
-    "questionNumber": 22,
+    "number": 22,
     "scale": "Diepgaande leerstrategieën",
     "text": "Tijdens het leren, duid ik de belangrijkste dingen aan of schrijf ik ze op."
   },
   {
-    "questionNumber": 23,
+    "number": 23,
     "scale": "Diepgaande leerstrategieën",
     "text": "Tijdens het leren, kijk ik wat belangrijk en wat minder belangrijk is."
   },
   {
-    "questionNumber": 24,
+    "number": 24,
     "scale": "Diepgaande leerstrategieën",
     "text": "Tijdens het leren, zoek ik naar de betekenis van moeilijke woorden."
   },
   {
-    "questionNumber": 25,
+    "number": 25,
     "scale": "Doorzettingsvermogen",
     "text": "Ook als ik liever andere dingen wil doen, begin ik aan mijn schoolwerk."
   },
   {
-    "questionNumber": 26,
+    "number": 26,
     "scale": "Doorzettingsvermogen",
     "text": "Ook als ik mijn schoolwerk moeilijk of saai vind, doe ik mijn best."
   },
   {
-    "questionNumber": 27,
+    "number": 27,
     "scale": "Doorzettingsvermogen",
     "text": "Ook als ik liever andere dingen wil doen, werk ik mijn schoolwerk af."
   },
   {
-    "questionNumber": 28,
+    "number": 28,
     "scale": "Doorzettingsvermogen",
     "text": "Ik hou vol tot mijn schoolwerk af is."
   },
   {
-    "questionNumber": 29,
+    "number": 29,
     "scale": "Doorzettingsvermogen",
     "text": "Tijdens mijn schoolwerk, werk ik aandachtig en laat ik me niet afleiden."
   },
   {
-    "questionNumber": 30,
+    "number": 30,
     "scale": "Doorzettingsvermogen",
     "text": "Als ik afgeleid ben tijdens mijn schoolwerk, probeer ik snel weer verder te werken."
   },
   {
-    "questionNumber": 31,
+    "number": 31,
     "scale": "Monitoring",
     "text": "Tijdens mijn schoolwerk, vraag ik me af: ‘Lukt het goed op deze manier?’."
   },
   {
-    "questionNumber": 32,
+    "number": 32,
     "scale": "Monitoring",
     "text": "Als ik merk dat iets niet lukt, probeer ik het op een andere manier aan te pakken."
   },
   {
-    "questionNumber": 33,
+    "number": 33,
     "scale": "Monitoring",
     "text": "Tijdens mijn schoolwerk, vraag ik me af: ‘Begrijp ik nog alles?’."
   },
   {
-    "questionNumber": 34,
+    "number": 34,
     "scale": "Monitoring",
     "text": "Tijdens mijn schoolwerk, vraag ik me af: ‘Heb ik nog genoeg tijd?’."
   },
   {
-    "questionNumber": 35,
+    "number": 35,
     "scale": "Monitoring",
     "text": "Tijdens mijn schoolwerk, kijk ik tussendoor wat ik al gedaan heb en hoeveel ik nog moet doen."
   },
   {
-    "questionNumber": 36,
+    "number": 36,
     "scale": "Monitoring",
     "text": "Tijdens mijn schoolwerk, volg ik mijn planning."
   },
   {
-    "questionNumber": 37,
+    "number": 37,
     "scale": "Monitoring",
     "text": "Tijdens mijn schoolwerk, vraag ik me af: ‘Wat vind ik moeilijk? Wat moet ik nog eens oefenen?’."
   },
   {
-    "questionNumber": 38,
+    "number": 38,
     "scale": "Motivatiestrategieën",
     "text": "Tijdens mijn schoolwerk, motiveer ik mezelf om verder te werken."
   },
   {
-    "questionNumber": 39,
+    "number": 39,
     "scale": "Motivatiestrategieën",
     "text": "Tijdens mijn schoolwerk, zeg ik tegen mezelf: ‘Nog even en je bent klaar.’"
   },
   {
-    "questionNumber": 40,
+    "number": 40,
     "scale": "Motivatiestrategieën",
     "text": "Tijdens mijn schoolwerk, zeg ik tegen mezelf: ‘Je kan het! Doe maar verder!’."
   },
   {
-    "questionNumber": 41,
+    "number": 41,
     "scale": "Motivatiestrategieën",
     "text": "Tijdens mijn schoolwerk, denk ik aan redenen waarom het belangrijk is om dit schoolwerk te doen."
   },
   {
-    "questionNumber": 42,
+    "number": 42,
     "scale": "Zelfevaluatie-productevaluatie",
     "text": "Na mijn schoolwerk, kijk ik mijn antwoorden na."
   },
   {
-    "questionNumber": 43,
+    "number": 43,
     "scale": "Zelfevaluatie-productevaluatie",
     "text": "Na mijn schoolwerk, kijk ik of ik niets vergeten ben."
   },
   {
-    "questionNumber": 44,
+    "number": 44,
     "scale": "Zelfevaluatie-productevaluatie",
     "text": "Na mijn schoolwerk, kijk ik of ik alles gedaan heb wat gevraagd werd."
   },
   {
-    "questionNumber": 45,
+    "number": 45,
     "scale": "Zelfevaluatie-procesevaluatie",
     "text": "Na mijn schoolwerk, vraag ik me af: ‘Heb ik dit op een goede manier gedaan?’."
   },
   {
-    "questionNumber": 46,
+    "number": 46,
     "scale": "Zelfevaluatie-procesevaluatie",
     "text": "Na mijn schoolwerk, vraag ik me af: ‘Zal ik het de volgende keer op dezelfde manier doen of kies ik beter een andere manier?’."
   },
   {
-    "questionNumber": 47,
+    "number": 47,
     "scale": "Zelfevaluatie-procesevaluatie",
     "text": "Na mijn schoolwerk, vraag ik me af: ‘Is het goed gegaan?’."
   },
   {
-    "questionNumber": 48,
+    "number": 48,
     "scale": "Zelfevaluatie-procesevaluatie",
     "text": "Na mijn schoolwerk, vraag ik me af: ‘Wat vond ik ervan (leuk, moeilijk, saai, interessant, …)?"
   },
   {
-    "questionNumber": 49,
+    "number": 49,
     "scale": "Externe regulatie",
     "text": "… omdat ik dat moet doen van anderen (ouders, juf, meester, …)."
   },
   {
-    "questionNumber": 50,
+    "number": 50,
     "scale": "Externe regulatie",
     "text": "… omdat anderen (ouders, juf, meester, …) me verplichten om dat te doen."
   },
   {
-    "questionNumber": 51,
+    "number": 51,
     "scale": "Externe regulatie",
     "text": "… omdat anderen (ouders, juf, meester, …) me dwingen dat te doen."
   },
   {
-    "questionNumber": 52,
+    "number": 52,
     "scale": "Geïntrojecteerde regulatie",
     "text": "… omdat ik me schuldig zou voelen als ik niet mijn best zou doen."
   },
   {
-    "questionNumber": 53,
+    "number": 53,
     "scale": "Geïntrojecteerde regulatie",
     "text": "… omdat ik me zou schamen als ik niet mijn best zou doen."
   },
   {
-    "questionNumber": 54,
+    "number": 54,
     "scale": "Geïntrojecteerde regulatie",
     "text": "… omdat ik wil dat anderen (ouders, vrienden, juf, meester, …) denken dat ik slim ben."
   },
   {
-    "questionNumber": 55,
+    "number": 55,
     "scale": "Geïntrojecteerde regulatie",
     "text": "… omdat ik aan anderen (ouders, vrienden, juf, meester, …) wil tonen dat ik een goede leerling ben."
   },
   {
-    "questionNumber": 56,
+    "number": 56,
     "scale": "Geïdentificeerde regulatie",
     "text": "… omdat ik nieuwe dingen wil bijleren."
   },
   {
-    "questionNumber": 57,
+    "number": 57,
     "scale": "Geïdentificeerde regulatie",
     "text": "… omdat ik dat belangrijk vind voor later."
   },
   {
-    "questionNumber": 58,
+    "number": 58,
     "scale": "Geïdentificeerde regulatie",
     "text": "… omdat ik dat nuttig vind voor mezelf."
   },
   {
-    "questionNumber": 59,
+    "number": 59,
     "scale": "Geïdentificeerde regulatie",
     "text": "… omdat ik dat zelf belangrijk vind."
   },
   {
-    "questionNumber": 60,
+    "number": 60,
     "scale": "Interne regulatie",
     "text": "… omdat ik het boeiend vind."
   },
   {
-    "questionNumber": 61,
+    "number": 61,
     "scale": "Interne regulatie",
     "text": "… omdat ik het leuk vind."
   },
   {
-    "questionNumber": 62,
+    "number": 62,
     "scale": "Interne regulatie",
     "text": "… omdat ik dat heel graag doe."
   },
   {
-    "questionNumber": 63,
+    "number": 63,
     "scale": "Zelfeffectiviteit-zelfregulatie",
     "text": "… vooraf nadenken op welke manier ik mijn schoolwerk ga aanpakken."
   },
   {
-    "questionNumber": 64,
+    "number": 64,
     "scale": "Zelfeffectiviteit-zelfregulatie",
     "text": "… vooraf mijn schoolwerk plannen."
   },
   {
-    "questionNumber": 65,
+    "number": 65,
     "scale": "Zelfeffectiviteit-motivatie",
     "text": "… mezelf motiveren om aan mijn schoolwerk te beginnen."
   },
   {
-    "questionNumber": 66,
+    "number": 66,
     "scale": "Zelfeffectiviteit-motivatie",
     "text": "… mezelf motiveren om mijn schoolwerk af te werken."
   },
   {
-    "questionNumber": 67,
+    "number": 67,
     "scale": "Zelfeffectiviteit-motivatie",
     "text": "… mijn schoolwerk maken, ook al vind ik het saai of moeilijk."
   },
   {
-    "questionNumber": 68,
+    "number": 68,
     "scale": "Zelfeffectiviteit-zelfregulatie",
     "text": "… aandachtig werken tijdens mijn schoolwerk."
   },
   {
-    "questionNumber": 69,
+    "number": 69,
     "scale": "Zelfeffectiviteit-motivatie",
     "text": "… volhouden tijdens het maken van mijn schoolwerk."
   },
   {
-    "questionNumber": 70,
+    "number": 70,
     "scale": "Zelfeffectiviteit-zelfregulatie",
     "text": "… weten wat belangrijk en minder belangrijk is tijdens het leren."
   },
   {
-    "questionNumber": 71,
+    "number": 71,
     "scale": "Zelfeffectiviteit-zelfregulatie",
     "text": "… belangrijke dingen aanduiden tijdens het leren."
   },
   {
-    "questionNumber": 72,
+    "number": 72,
     "scale": "Zelfeffectiviteit-zelfregulatie",
     "text": "… het verband leggen tussen iets nieuws dat ik leer en wat ik al weet van vroeger."
   },
   {
-    "questionNumber": 73,
+    "number": 73,
     "scale": "Zelfeffectiviteit-zelfregulatie",
     "text": "… een schema of mind map (woordenspin) maken tijdens het leren."
   },
   {
-    "questionNumber": 74,
+    "number": 74,
     "scale": "Zelfeffectiviteit-zelfregulatie",
     "text": "… mijn manier van werken veranderen als iets niet goed gaat tijdens mijn schoolwerk."
   },
   {
-    "questionNumber": 75,
+    "number": 75,
     "scale": "Zelfeffectiviteit-zelfregulatie",
     "text": "… mijn schoolwerk zelf controleren."
   }

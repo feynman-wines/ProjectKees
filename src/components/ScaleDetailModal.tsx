@@ -2,12 +2,8 @@ import React from 'react';
 import { 
   X, 
   Lightbulb, 
-  CheckCircle2, 
-  Info, 
   FileText, 
-  ArrowRight,
-  TrendingUp,
-  Award
+  ListOrdered
 } from 'lucide-react';
 import { ScaleDefinition, QuestionItem, ComparisonItem } from '../types/survey';
 
@@ -17,9 +13,12 @@ interface ScaleDetailModalProps {
   questions: QuestionItem[];
   questionAverages: Record<number, number>;
   questionStdDevs: Record<number, number>;
+  totalQuestionAverages: Record<number, number>;
+  hanQuestionAverages: Record<number, number>;
   currentMode: 'total' | 'han' | 'student';
   selectedStudentNumber: string;
   onClose: () => void;
+  onOpenInQuestionsTab?: (scaleName: string) => void;
 }
 
 export const ScaleDetailModal: React.FC<ScaleDetailModalProps> = ({
@@ -28,9 +27,12 @@ export const ScaleDetailModal: React.FC<ScaleDetailModalProps> = ({
   questions,
   questionAverages,
   questionStdDevs,
+  totalQuestionAverages,
+  hanQuestionAverages,
   currentMode,
   selectedStudentNumber,
   onClose,
+  onOpenInQuestionsTab,
 }) => {
   if (!scale || !comparisonItem) return null;
 
@@ -132,36 +134,58 @@ export const ScaleDetailModal: React.FC<ScaleDetailModalProps> = ({
 
           {/* Vragen in deze schaal */}
           <div>
-            <h3 className="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-slate-600" />
-              Vragen in deze schaal ({relevantQuestions.length})
-            </h3>
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-slate-600" />
+                Vragen in deze schaal ({relevantQuestions.length})
+              </h3>
+              {onOpenInQuestionsTab && (
+                <button
+                  onClick={() => {
+                    onOpenInQuestionsTab(scale.name);
+                    onClose();
+                  }}
+                  className="inline-flex items-center gap-1.5 text-xs font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer"
+                >
+                  <ListOrdered className="w-3.5 h-3.5" />
+                  Bekijk antwoordverdeling in Verkenner
+                </button>
+              )}
+            </div>
             <div className="space-y-2.5">
               {relevantQuestions.map((q) => {
-                const avg = questionAverages[q.number] || 0;
-                const std = questionStdDevs[q.number] || 0;
+                const avg = questionAverages[q.number] ?? 0;
+                const std = questionStdDevs[q.number] ?? 0;
+                const totalAvg = totalQuestionAverages[q.number] ?? 0;
+                const hanAvg = hanQuestionAverages[q.number] ?? 0;
                 return (
                   <div
                     key={q.number}
-                    className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs"
+                    className="p-3.5 rounded-xl border border-slate-200 bg-slate-50/50 flex flex-col gap-2 text-xs"
                   >
-                    <div className="flex items-start gap-2.5">
-                      <span className="font-bold text-blue-700 bg-blue-100/60 px-2 py-0.5 rounded-md shrink-0">
-                        Vraag {q.number}
-                      </span>
-                      <p className="text-slate-800 font-medium leading-relaxed">
-                        {q.text}
-                      </p>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-start gap-2.5">
+                        <span className="font-bold text-blue-700 bg-blue-100/60 px-2 py-0.5 rounded-md shrink-0">
+                          Vraag {q.number}
+                        </span>
+                        <p className="text-slate-800 font-medium leading-relaxed">
+                          {q.text}
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-4 shrink-0 sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
+                        <div>
+                          <span className="text-[10px] text-slate-400 block">Gemiddelde</span>
+                          <span className="font-bold text-slate-900 text-sm">{avg.toFixed(2)}</span>
+                        </div>
+                        <div>
+                          <span className="text-[10px] text-slate-400 block">Standaardafw.</span>
+                          <span className="font-medium text-slate-600">{std.toFixed(2)}</span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex items-center gap-4 shrink-0 sm:text-right border-t sm:border-t-0 pt-2 sm:pt-0 border-slate-200">
-                      <div>
-                        <span className="text-[10px] text-slate-400 block">Gemiddelde</span>
-                        <span className="font-bold text-slate-900 text-sm">{avg.toFixed(2)}</span>
-                      </div>
-                      <div>
-                        <span className="text-[10px] text-slate-400 block">Standaardafw.</span>
-                        <span className="font-medium text-slate-600">{std.toFixed(2)}</span>
-                      </div>
+                    <div className="flex flex-wrap items-center gap-4 text-[11px] text-slate-500 pt-1 border-t border-slate-200/70">
+                      <span>Totaal leerlingen: <strong className="text-slate-700">{totalAvg.toFixed(2)}</strong></span>
+                      <span>Groep "HAN": <strong className="text-slate-700">{hanAvg.toFixed(2)}</strong></span>
                     </div>
                   </div>
                 );

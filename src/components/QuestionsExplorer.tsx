@@ -1,12 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Search, 
-  Filter, 
-  ArrowUpDown, 
-  CheckCircle, 
-  AlertCircle, 
-  HelpCircle,
-  ListOrdered
+  ListOrdered,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus
 } from 'lucide-react';
 import { QuestionItem, ScaleDefinition } from '../types/survey';
 
@@ -16,7 +14,23 @@ interface QuestionsExplorerProps {
   questionAverages: Record<number, number>;
   questionStdDevs: Record<number, number>;
   questionDistributions: Record<number, { 1: number; 2: number; 3: number; 4: number; 5: number }>;
+  totalQuestionAverages: Record<number, number>;
+  hanQuestionAverages: Record<number, number>;
+  currentMode: 'total' | 'han' | 'student';
+  selectedStudentNumber: string;
+  showBenchmark: boolean;
   currentGroupName: string;
+  initialScaleFilter?: string;
+}
+
+function getQuestionStem(qNum: number): string | null {
+  if (qNum >= 49 && qNum <= 62) {
+    return 'Ik doe mijn best voor school…';
+  }
+  if (qNum >= 63 && qNum <= 75) {
+    return 'Ik ben goed in…';
+  }
+  return null;
 }
 
 export const QuestionsExplorer: React.FC<QuestionsExplorerProps> = ({
@@ -25,17 +39,32 @@ export const QuestionsExplorer: React.FC<QuestionsExplorerProps> = ({
   questionAverages,
   questionStdDevs,
   questionDistributions,
+  totalQuestionAverages,
+  hanQuestionAverages,
+  currentMode,
+  selectedStudentNumber,
+  showBenchmark,
   currentGroupName,
+  initialScaleFilter,
 }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedScale, setSelectedScale] = useState<string>('all');
+  const [selectedScale, setSelectedScale] = useState<string>(initialScaleFilter || 'all');
   const [sortBy, setSortBy] = useState<'number' | 'asc_score' | 'desc_score' | 'std'>('number');
+
+  useEffect(() => {
+    if (initialScaleFilter) {
+      setSelectedScale(initialScaleFilter);
+    }
+  }, [initialScaleFilter]);
 
   // Filter
   const filteredQuestions = questions.filter((q) => {
+    const stem = getQuestionStem(q.number) || '';
     const matchesSearch =
       q.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      String(q.number).includes(searchTerm);
+      stem.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      q.scale.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      String(q.number).includes(searchTerm.trim());
     const matchesScale = selectedScale === 'all' || q.scale === selectedScale;
     return matchesSearch && matchesScale;
   });
@@ -61,11 +90,11 @@ export const QuestionsExplorer: React.FC<QuestionsExplorerProps> = ({
           <div className="flex items-center gap-2 mb-1">
             <ListOrdered className="w-5 h-5 text-indigo-600" />
             <h2 className="text-lg font-bold text-slate-900">
-              Vragenlijst Detailverkenner (75 Items)
+              Resultaten per Vraag & Stelling (75 Items)
             </h2>
           </div>
           <p className="text-xs text-slate-500">
-            Bekijk de afzonderlijke stellingen, scores en de verdeling van antwoorden voor {currentGroupName}
+            Bekijk afzonderlijke scores, antwoordverdelingen en benchmarks voor {currentGroupName}
           </p>
         </div>
 
@@ -76,7 +105,7 @@ export const QuestionsExplorer: React.FC<QuestionsExplorerProps> = ({
             <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-2.5" />
             <input
               type="text"
-              placeholder="Zoek in stelling of nummer..."
+              placeholder="Zoek op vraagtekst of nr..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
               className="w-full pl-8 pr-3 py-1.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
@@ -100,7 +129,7 @@ export const QuestionsExplorer: React.FC<QuestionsExplorerProps> = ({
           {/* Sortering */}
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
+            onChange={(e) => setSortBy(e.target.value as 'number' | 'asc_score' | 'desc_score' | 'std')}
             className="px-3 py-1.5 text-xs rounded-xl border border-slate-200 bg-white text-slate-700 focus:outline-none focus:border-blue-500 cursor-pointer"
           >
             <option value="number">Vraagnummer (1-75)</option>
@@ -115,26 +144,44 @@ export const QuestionsExplorer: React.FC<QuestionsExplorerProps> = ({
       <div className="mt-4 p-2.5 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center justify-between text-[11px] text-slate-600 gap-2">
         <span className="font-semibold text-slate-700">Antwoordschaal (1 t/m 5):</span>
         <div className="flex flex-wrap items-center gap-3">
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-xs bg-rose-400"></span> 1: Nooit</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-xs bg-amber-400"></span> 2: Bijna nooit</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-xs bg-slate-400"></span> 3: Soms</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-xs bg-blue-400"></span> 4: Bijna altijd</span>
-          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-xs bg-emerald-500"></span> 5: Altijd</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-xs bg-rose-400"></span> 1: Nooit / Helemaal oneens</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-xs bg-amber-400"></span> 2: Bijna nooit / Oneens</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-xs bg-slate-400"></span> 3: Soms / Neutraal</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-xs bg-blue-400"></span> 4: Bijna altijd / Akkoord</span>
+          <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded-xs bg-emerald-500"></span> 5: Altijd / Helemaal akkoord</span>
         </div>
       </div>
 
-      {/* Vragenlijst tabel / cards */}
-      <div className="mt-5 space-y-3">
+      {/* Teller */}
+      <div className="mt-3 text-xs text-slate-500 font-medium">
+        Toont <strong className="text-slate-800">{sortedQuestions.length}</strong> van de {questions.length} stellingen
+        {selectedScale !== 'all' && (
+          <button
+            onClick={() => setSelectedScale('all')}
+            className="ml-2 text-blue-600 hover:underline cursor-pointer"
+          >
+            (Toon alle schalen)
+          </button>
+        )}
+      </div>
+
+      {/* Vragenlijst cards */}
+      <div className="mt-4 space-y-3">
         {sortedQuestions.length === 0 ? (
           <div className="text-center py-8 text-xs text-slate-400">
             Geen vragen gevonden met de huidige filters.
           </div>
         ) : (
           sortedQuestions.map((q) => {
-            const avg = questionAverages[q.number] || 0;
-            const std = questionStdDevs[q.number] || 0;
+            const avg = questionAverages[q.number] ?? 0;
+            const std = questionStdDevs[q.number] ?? 0;
+            const totalAvg = totalQuestionAverages[q.number] ?? 0;
+            const hanAvg = hanQuestionAverages[q.number] ?? 0;
+            const deltaTotal = Number((avg - totalAvg).toFixed(2));
             const dist = questionDistributions[q.number] || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
-            const totalResponses = (dist[1] + dist[2] + dist[3] + dist[4] + dist[5]) || 1;
+            const totalResponses = dist[1] + dist[2] + dist[3] + dist[4] + dist[5];
+            const denom = totalResponses || 1;
+            const stem = getQuestionStem(q.number);
 
             return (
               <div
@@ -147,10 +194,15 @@ export const QuestionsExplorer: React.FC<QuestionsExplorerProps> = ({
                       {q.number}
                     </span>
                     <div>
-                      <div className="flex items-center gap-2 mb-1">
+                      <div className="flex flex-wrap items-center gap-2 mb-1">
                         <span className="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-600">
                           {q.scale}
                         </span>
+                        {stem && (
+                          <span className="text-[11px] italic text-slate-500">
+                            {stem}
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs sm:text-sm font-medium text-slate-800 leading-relaxed">
                         {q.text}
@@ -158,8 +210,30 @@ export const QuestionsExplorer: React.FC<QuestionsExplorerProps> = ({
                     </div>
                   </div>
 
-                  {/* Gemiddelde & std dev */}
+                  {/* Gemiddelde, delta & std dev */}
                   <div className="flex items-center gap-4 shrink-0 border-t md:border-t-0 pt-2 md:pt-0 border-slate-100">
+                    {currentMode === 'student' && (
+                      <div
+                        className={`flex items-center gap-0.5 text-xs font-bold px-2 py-1 rounded-md ${
+                          deltaTotal > 0.1
+                            ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            : deltaTotal < -0.1
+                            ? 'bg-rose-50 text-rose-700 border border-rose-200'
+                            : 'bg-slate-100 text-slate-600'
+                        }`}
+                        title="Verschil met het gemiddelde van alle leerlingen"
+                      >
+                        {deltaTotal > 0 ? (
+                          <ArrowUpRight className="w-3.5 h-3.5" />
+                        ) : deltaTotal < 0 ? (
+                          <ArrowDownRight className="w-3.5 h-3.5" />
+                        ) : (
+                          <Minus className="w-3.5 h-3.5" />
+                        )}
+                        <span>{deltaTotal > 0 ? `+${deltaTotal.toFixed(2)}` : deltaTotal.toFixed(2)}</span>
+                      </div>
+                    )}
+
                     <div className="text-right">
                       <span className="text-base font-extrabold text-slate-900">
                         {avg.toFixed(2)}
@@ -176,37 +250,63 @@ export const QuestionsExplorer: React.FC<QuestionsExplorerProps> = ({
                   </div>
                 </div>
 
+                {/* Benchmark vergelijking per vraag */}
+                {showBenchmark && (
+                  <div className="mt-2.5 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] text-slate-600 bg-slate-50/70 px-3 py-1.5 rounded-lg border border-slate-100">
+                    {currentMode === 'student' && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-indigo-600"></span>
+                        Klas ({selectedStudentNumber}): <strong className="text-slate-900">{avg.toFixed(2)}</strong>
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-blue-400"></span>
+                      Totaal leerlingen: <strong className="text-slate-900">{totalAvg.toFixed(2)}</strong>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                      Groep "HAN": <strong className="text-slate-900">{hanAvg.toFixed(2)}</strong>
+                    </span>
+                  </div>
+                )}
+
                 {/* Likert verdelingsbalk */}
                 <div className="mt-3 pt-2 border-t border-slate-100">
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 mb-1">
-                    <span>Antwoordverdeling:</span>
-                    <span>N = {totalResponses}</span>
+                  <div className="flex flex-wrap items-center justify-between text-[10px] text-slate-500 mb-1.5 gap-2">
+                    <span>Antwoordverdeling (N = {totalResponses}):</span>
+                    <div className="flex items-center gap-2.5">
+                      <span>1: <strong>{dist[1]}</strong></span>
+                      <span>2: <strong>{dist[2]}</strong></span>
+                      <span>3: <strong>{dist[3]}</strong></span>
+                      <span>4: <strong>{dist[4]}</strong></span>
+                      <span>5: <strong>{dist[5]}</strong></span>
+                    </div>
                   </div>
-                  <div className="w-full h-2 rounded-full overflow-hidden flex bg-slate-100">
+                  <div className="w-full h-2.5 rounded-full overflow-hidden flex bg-slate-100">
                     <div
-                      style={{ width: `${(dist[1] / totalResponses) * 100}%` }}
-                      className="bg-rose-400 h-full"
-                      title={`1 (Nooit): ${dist[1]} respondenten`}
+                      style={{ width: `${(dist[1] / denom) * 100}%` }}
+                      className="bg-rose-400 h-full transition-all"
+                      title={`Score 1: ${dist[1]} respondenten`}
                     />
                     <div
-                      style={{ width: `${(dist[2] / totalResponses) * 100}%` }}
-                      className="bg-amber-400 h-full"
-                      title={`2 (Bijna nooit): ${dist[2]} respondenten`}
+                      style={{ width: `${(dist[2] / denom) * 100}%` }}
+                      className="bg-amber-400 h-full transition-all"
+                      title={`Score 2: ${dist[2]} respondenten`}
                     />
                     <div
-                      style={{ width: `${(dist[3] / totalResponses) * 100}%` }}
-                      className="bg-slate-400 h-full"
-                      title={`3 (Soms): ${dist[3]} respondenten`}
+                      style={{ width: `${(dist[3] / denom) * 100}%` }}
+                      className="bg-slate-400 h-full transition-all"
+                      title={`Score 3: ${dist[3]} respondenten`}
                     />
                     <div
-                      style={{ width: `${(dist[4] / totalResponses) * 100}%` }}
-                      className="bg-blue-400 h-full"
-                      title={`4 (Bijna altijd): ${dist[4]} respondenten`}
+                      style={{ width: `${(dist[4] / denom) * 100}%` }}
+                      className="bg-blue-400 h-full transition-all"
+                      title={`Score 4: ${dist[4]} respondenten`}
                     />
                     <div
-                      style={{ width: `${(dist[5] / totalResponses) * 100}%` }}
-                      className="bg-emerald-500 h-full"
-                      title={`5 (Altijd): ${dist[5]} respondenten`}
+                      style={{ width: `${(dist[5] / denom) * 100}%` }}
+                      className="bg-emerald-500 h-full transition-all"
+                      title={`Score 5: ${dist[5]} respondenten`}
                     />
                   </div>
                 </div>

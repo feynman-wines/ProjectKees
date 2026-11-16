@@ -133,9 +133,20 @@ export function parseExcelWorkbook(data: ArrayBuffer | Uint8Array, fileName: str
   };
 }
 
+export interface QuestionExportRow {
+  number: number;
+  scale: string;
+  text: string;
+  ownScore: number | null;
+  totalScore: number;
+  hanScore: number;
+  stdDev: number;
+}
+
 export function exportSummaryToExcel(
   comparisonData: { scaleName: string; category: string; ownScore: number | null; totalScore: number; hanScore: number; deltaWithTotal: number | null; deltaWithHan: number | null }[],
-  currentGroupName: string
+  currentGroupName: string,
+  questionRows?: QuestionExportRow[]
 ) {
   const headers = ['Schaal', 'Categorie', `Score ${currentGroupName}`, 'Gemiddelde Totaal', 'Score HAN', 'Verschil met Totaal', 'Verschil met HAN'];
   const rows = comparisonData.map((item) => [
@@ -148,8 +159,24 @@ export function exportSummaryToExcel(
     item.deltaWithHan !== null ? item.deltaWithHan : '-',
   ]);
 
-  const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
   const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Analyse Resultaten');
+  const wsScales = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+  XLSX.utils.book_append_sheet(wb, wsScales, '15 Schalen');
+
+  if (questionRows && questionRows.length > 0) {
+    const qHeaders = ['Vraagnummer', 'Schaal', 'Stelling', `Score ${currentGroupName}`, 'Gemiddelde Totaal', 'Score HAN', 'Spreiding (SD)'];
+    const qData = questionRows.map((q) => [
+      q.number,
+      q.scale,
+      q.text,
+      q.ownScore !== null ? q.ownScore : '-',
+      q.totalScore,
+      q.hanScore,
+      q.stdDev,
+    ]);
+    const wsQuestions = XLSX.utils.aoa_to_sheet([qHeaders, ...qData]);
+    XLSX.utils.book_append_sheet(wb, wsQuestions, '75 Vragen');
+  }
+
   XLSX.writeFile(wb, `Zelfregulatietool-analyse-${currentGroupName}.xlsx`);
 }
