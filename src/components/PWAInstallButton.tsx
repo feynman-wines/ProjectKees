@@ -14,10 +14,12 @@ export const PWAInstallButton: React.FC = () => {
     return (
       <button
         onClick={install}
-        className="inline-flex items-center gap-1.5 rounded-lg bg-[#111111] px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#E50056] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+        className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#111111] px-2.5 sm:px-3.5 py-2 text-xs font-semibold text-white hover:bg-[#E50056] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+        title="Installeer als app op je apparaat"
       >
-        <Download className="w-3.5 h-3.5" />
-        Installeer App
+        <Download className="w-3.5 h-3.5 shrink-0" />
+        <span className="sm:hidden">App</span>
+        <span className="hidden sm:inline">Installeer App</span>
       </button>
     );
   }
@@ -27,10 +29,12 @@ export const PWAInstallButton: React.FC = () => {
       <>
         <button
           onClick={() => setShowIOSGuide(true)}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-xs font-semibold text-[#111111] hover:border-[#111111] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-zinc-300 bg-white px-2.5 sm:px-3 py-2 text-xs font-semibold text-[#111111] hover:border-[#111111] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+          title="Zet op beginscherm"
         >
-          <Smartphone className="w-3.5 h-3.5 text-[#E50056]" />
-          Zet op beginscherm
+          <Smartphone className="w-3.5 h-3.5 text-[#E50056] shrink-0" />
+          <span className="sm:hidden">App</span>
+          <span className="hidden sm:inline">Zet op beginscherm</span>
         </button>
 
         {showIOSGuide && (

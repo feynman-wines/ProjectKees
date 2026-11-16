@@ -173,7 +173,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#F6F6F7] text-[#111111] antialiased selection:bg-[#E50056]/15 selection:text-[#E50056] pb-16">
+    <div className="min-h-screen overflow-x-hidden bg-[#F6F6F7] text-[#111111] antialiased selection:bg-[#E50056]/15 selection:text-[#E50056] pb-16">
       {/* App Header */}
       <Header
         isCustomData={isCustomData}
@@ -204,13 +204,21 @@ export default function App() {
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
             <button
               onClick={() => setUploadModalOpen(true)}
               className="px-5 py-2.5 rounded-lg bg-[#E50056] hover:bg-[#C20048] text-white font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
               Eigen Excel Inlezen
             </button>
+            {isCustomData && (
+              <button
+                onClick={handleResetToSample}
+                className="md:hidden px-3.5 py-2.5 rounded-lg border border-zinc-700 text-zinc-200 hover:bg-zinc-800 font-semibold text-xs transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              >
+                Terug naar voorbeeld
+              </button>
+            )}
           </div>
         </div>
 
