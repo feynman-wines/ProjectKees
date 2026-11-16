@@ -1,22 +1,24 @@
 import React from 'react';
-import { Upload, RotateCcw, Download } from 'lucide-react';
+import { Upload, Trash2, Download } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 
 interface HeaderProps {
+  hasData: boolean;
   isCustomData: boolean;
   fileName?: string;
   totalRespondents: number;
   onOpenUpload: () => void;
-  onResetToSample: () => void;
+  onClearData: () => void;
   onExportExcel: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
+  hasData,
   isCustomData,
   fileName,
   totalRespondents,
   onOpenUpload,
-  onResetToSample,
+  onClearData,
   onExportExcel,
 }) => {
   return (
@@ -24,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
       {/* HAN kenmerkende rode bovenlijn */}
       <div className="h-1 w-full bg-[#E50056]" />
       <div className="max-w-7xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2 sm:gap-6">
-        {/* Zone 1: HAN Merknaam (krimpt netjes mee op smalle schermen) */}
+        {/* Zone 1: HAN Merknaam */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
           <div className="px-2 py-0.5 sm:px-2.5 sm:py-1 bg-[#E50056] text-white font-display font-extrabold text-xs sm:text-sm tracking-tight rounded-sm select-none shrink-0">
             HAN
@@ -34,10 +36,14 @@ export const Header: React.FC<HeaderProps> = ({
           </span>
         </div>
 
-        {/* Zone 2: Dataset status (unboxed typografie op desktop) */}
+        {/* Zone 2: Dataset status */}
         <div className="hidden lg:flex items-center gap-2 text-xs text-zinc-500 whitespace-nowrap truncate">
           <span className="font-medium text-zinc-700">
-            {isCustomData ? fileName || 'Eigen dataset' : 'Voorbeeld-dataset'}
+            {!hasData
+              ? 'Geen dataset geladen'
+              : isCustomData
+              ? fileName || 'Eigen dataset'
+              : 'Voorbeeld-dataset'}
           </span>
           <span aria-hidden="true">&middot;</span>
           <span className="font-mono-nums font-semibold text-[#111111]">
@@ -45,28 +51,30 @@ export const Header: React.FC<HeaderProps> = ({
           </span>
         </div>
 
-        {/* Zone 3: Acties (compact op mobiel, volledig op desktop) */}
+        {/* Zone 3: Acties */}
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
-          {isCustomData && (
+          {hasData && (
             <button
-              onClick={onResetToSample}
-              className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg text-zinc-600 hover:text-[#111111] hover:bg-zinc-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-              title="Terug naar voorbeeld-dataset"
+              onClick={onClearData}
+              className="hidden md:inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg text-zinc-600 hover:text-[#E50056] hover:bg-rose-50 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              title="Alle huidige data wissen"
             >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Voorbeeld</span>
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Data wissen</span>
             </button>
           )}
 
-          <button
-            onClick={onExportExcel}
-            className="inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 text-xs font-semibold rounded-lg bg-white border border-zinc-300 text-[#111111] hover:border-[#111111] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
-            title="Exporteer resultaten naar Excel"
-            aria-label="Exporteer Excel"
-          >
-            <Download className="w-3.5 h-3.5 text-[#111111] shrink-0" />
-            <span className="hidden sm:inline">Exporteer Excel</span>
-          </button>
+          {hasData && (
+            <button
+              onClick={onExportExcel}
+              className="inline-flex items-center justify-center gap-1.5 px-2.5 sm:px-3.5 py-2 text-xs font-semibold rounded-lg bg-white border border-zinc-300 text-[#111111] hover:border-[#111111] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+              title="Exporteer resultaten naar Excel"
+              aria-label="Exporteer Excel"
+            >
+              <Download className="w-3.5 h-3.5 text-[#111111] shrink-0" />
+              <span className="hidden sm:inline">Exporteer Excel</span>
+            </button>
+          )}
 
           <button
             onClick={onOpenUpload}

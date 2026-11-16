@@ -5,7 +5,11 @@ import {
   Compass, 
   Table, 
   Download, 
-  Info
+  Info,
+  Upload,
+  Trash2,
+  RotateCcw,
+  FileSpreadsheet
 } from 'lucide-react';
 import { ALL_QUESTIONS, SCALE_DEFINITIONS } from './data/surveyDefinitions';
 import { RespondentRecord, ScaleDefinition } from './types/survey';
@@ -27,6 +31,10 @@ import { OfflineIndicator } from './components/OfflineIndicator';
 export default function App() {
   // Dataset state
   const [records, setRecords] = useState<RespondentRecord[]>(() => {
+    const mode = localStorage.getItem('zr_data_mode');
+    if (mode === 'empty') {
+      return [];
+    }
     const saved = localStorage.getItem('zr_custom_records');
     if (saved) {
       try {
@@ -59,6 +67,8 @@ export default function App() {
   const [selectedScale, setSelectedScale] = useState<ScaleDefinition | null>(null);
   const [uploadModalOpen, setUploadModalOpen] = useState<boolean>(false);
 
+  const hasData = records.length > 0;
+
   // Extract distinct student numbers (all groups except "HAN")
   const studentNumbers = useMemo(() => {
     const nums = new Set<string>();
@@ -71,7 +81,11 @@ export default function App() {
   }, [records]);
 
   useEffect(() => {
-    if (!selectedStudentNumber && studentNumbers.length > 0) {
+    if (studentNumbers.length === 0) {
+      if (selectedStudentNumber) setSelectedStudentNumber('');
+      return;
+    }
+    if (!selectedStudentNumber || !studentNumbers.includes(selectedStudentNumber)) {
       setSelectedStudentNumber(studentNumbers[0]);
     }
   }, [studentNumbers, selectedStudentNumber]);
@@ -135,6 +149,7 @@ export default function App() {
     setRecords(newRecords);
     setIsCustomData(true);
     setCustomFileName(fileName);
+    localStorage.setItem('zr_data_mode', 'custom');
     localStorage.setItem('zr_custom_records', JSON.stringify(newRecords));
     localStorage.setItem('zr_is_custom', 'true');
     localStorage.setItem('zr_filename', fileName);
@@ -144,7 +159,24 @@ export default function App() {
     );
     if (newStudentNums.length > 0) {
       setSelectedStudentNumber(newStudentNums[0]);
+      setFilterMode('student');
+    } else if (newRecords.some((r) => r.group.toUpperCase() === 'HAN')) {
+      setFilterMode('han');
+    } else {
+      setFilterMode('total');
     }
+  };
+
+  const handleClearData = () => {
+    setRecords([]);
+    setIsCustomData(false);
+    setCustomFileName('');
+    setSelectedStudentNumber('');
+    setSelectedScale(null);
+    localStorage.setItem('zr_data_mode', 'empty');
+    localStorage.removeItem('zr_custom_records');
+    localStorage.removeItem('zr_is_custom');
+    localStorage.removeItem('zr_filename');
   };
 
   const handleResetToSample = () => {
@@ -152,13 +184,16 @@ export default function App() {
     setRecords(sample);
     setIsCustomData(false);
     setCustomFileName('');
+    localStorage.setItem('zr_data_mode', 'sample');
     localStorage.removeItem('zr_custom_records');
     localStorage.removeItem('zr_is_custom');
     localStorage.removeItem('zr_filename');
     setSelectedStudentNumber('304918');
+    setFilterMode('student');
   };
 
   const handleExportExcel = () => {
+    if (!hasData) return;
     const currentName = filterMode === 'student' ? `Student_${selectedStudentNumber}` : filterMode === 'han' ? 'HAN' : 'Totaal';
     const questionRows = ALL_QUESTIONS.map((q) => ({
       number: q.number,
@@ -176,11 +211,12 @@ export default function App() {
     <div className="min-h-screen overflow-x-hidden bg-[#F6F6F7] text-[#111111] antialiased selection:bg-[#E50056]/15 selection:text-[#E50056] pb-16">
       {/* App Header */}
       <Header
+        hasData={hasData}
         isCustomData={isCustomData}
         fileName={customFileName}
         totalRespondents={records.length}
         onOpenUpload={() => setUploadModalOpen(true)}
-        onResetToSample={handleResetToSample}
+        onClearData={handleClearData}
         onExportExcel={handleExportExcel}
       />
 
@@ -204,214 +240,249 @@ export default function App() {
             </p>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-2.5 shrink-0">
             <button
               onClick={() => setUploadModalOpen(true)}
               className="px-5 py-2.5 rounded-lg bg-[#E50056] hover:bg-[#C20048] text-white font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
               Eigen Excel Inlezen
             </button>
-            {isCustomData && (
+            {hasData && (
               <button
-                onClick={handleResetToSample}
-                className="md:hidden px-3.5 py-2.5 rounded-lg border border-zinc-700 text-zinc-200 hover:bg-zinc-800 font-semibold text-xs transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                onClick={handleClearData}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2.5 rounded-lg border border-zinc-700 text-zinc-200 hover:bg-zinc-800 hover:text-white font-semibold text-xs transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+                title="Alle data wissen zodat de app leeg is"
               >
-                Terug naar voorbeeld
+                <Trash2 className="w-3.5 h-3.5 text-[#E50056]" />
+                <span>Data wissen</span>
               </button>
             )}
           </div>
         </div>
 
-        {/* Filter balk (Eigen groep / Totaal / HAN) */}
-        <GroupFilterBar
-          mode={filterMode}
-          selectedStudentNumber={selectedStudentNumber}
-          studentNumbers={studentNumbers}
-          totalCount={allPupilRecords.length}
-          hanCount={hanRecords.length}
-          ownCount={ownGroupRecords.length}
-          showBenchmark={showBenchmark}
-          onModeChange={setFilterMode}
-          onStudentNumberChange={setSelectedStudentNumber}
-          onToggleBenchmark={setShowBenchmark}
-        />
-
-        {/* Tab navigatie (HAN underline/segmented stijl) */}
-        <div className="flex items-center gap-2 border-b border-zinc-200 mb-6 overflow-x-auto">
-          <button
-            onClick={() => setActiveMainTab('schalen')}
-            className={`inline-flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-              activeMainTab === 'schalen'
-                ? 'border-[#E50056] text-[#E50056]'
-                : 'border-transparent text-zinc-600 hover:text-[#111111]'
-            }`}
-          >
-            <BarChart3 className="w-4 h-4" />
-            <span>15 Schalen Analyse</span>
-          </button>
-
-          <button
-            onClick={() => setActiveMainTab('vragen')}
-            className={`inline-flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-              activeMainTab === 'vragen'
-                ? 'border-[#E50056] text-[#E50056]'
-                : 'border-transparent text-zinc-600 hover:text-[#111111]'
-            }`}
-          >
-            <ListOrdered className="w-4 h-4" />
-            <span>75 Vragen Detailverkenner</span>
-          </button>
-
-          <button
-            onClick={() => setActiveMainTab('advies')}
-            className={`inline-flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-              activeMainTab === 'advies'
-                ? 'border-[#E50056] text-[#E50056]'
-                : 'border-transparent text-zinc-600 hover:text-[#111111]'
-            }`}
-          >
-            <Compass className="w-4 h-4" />
-            <span>Pedagogische Inzichten</span>
-          </button>
-
-          <button
-            onClick={() => setActiveMainTab('data')}
-            className={`inline-flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
-              activeMainTab === 'data'
-                ? 'border-[#E50056] text-[#E50056]'
-                : 'border-transparent text-zinc-600 hover:text-[#111111]'
-            }`}
-          >
-            <Table className="w-4 h-4" />
-            <span className="font-mono-nums">Respondenten ({records.length})</span>
-          </button>
-        </div>
-
-        {/* Tab 1: Schalenanalyse */}
-        {activeMainTab === 'schalen' && (
-          <div>
-            <ComparisonOverview
-              comparisonData={comparisonData}
-              scales={SCALE_DEFINITIONS}
-              currentMode={filterMode}
-              selectedStudentNumber={selectedStudentNumber}
-              showBenchmark={showBenchmark}
-              onSelectScale={(scale) => setSelectedScale(scale)}
-            />
-
-            <PedagogicalInsights
-              comparisonData={comparisonData}
-              scales={SCALE_DEFINITIONS}
-              currentMode={filterMode}
-              selectedStudentNumber={selectedStudentNumber}
-              onSelectScale={(scale) => setSelectedScale(scale)}
-            />
-          </div>
-        )}
-
-        {/* Tab 2: Vragenlijst 75 Items */}
-        {activeMainTab === 'vragen' && (
-          <QuestionsExplorer
-            questions={ALL_QUESTIONS}
-            scales={SCALE_DEFINITIONS}
-            questionAverages={activeStats.questionAverages}
-            questionStdDevs={activeStats.questionStdDevs}
-            questionDistributions={activeStats.questionDistributions}
-            totalQuestionAverages={totalStats.questionAverages}
-            hanQuestionAverages={hanStats.questionAverages}
-            currentMode={filterMode}
-            selectedStudentNumber={selectedStudentNumber}
-            showBenchmark={showBenchmark}
-            initialScaleFilter={questionsScaleFilter}
-            currentGroupName={
-              filterMode === 'student'
-                ? `klas (${selectedStudentNumber})`
-                : filterMode === 'han'
-                ? 'groep "HAN"'
-                : 'het totaal van alle leerlingen'
-            }
-          />
-        )}
-
-        {/* Tab 3: Pedagogische Adviezen */}
-        {activeMainTab === 'advies' && (
-          <PedagogicalInsights
-            comparisonData={comparisonData}
-            scales={SCALE_DEFINITIONS}
-            currentMode={filterMode}
-            selectedStudentNumber={selectedStudentNumber}
-            onSelectScale={(scale) => setSelectedScale(scale)}
-          />
-        )}
-
-        {/* Tab 4: Ruwe Data & Respondentenlijst */}
-        {activeMainTab === 'data' && (
-          <div className="bg-white rounded-xl border border-zinc-200 p-5 sm:p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h3 className="text-lg font-bold text-[#111111]">
-                  Respondentenoverzicht
-                </h3>
-                <p className="text-xs text-zinc-500">
-                  Alle ingelezen rijen uit het Invoerblad van het Excel-bestand
-                </p>
-              </div>
+        {/* Lege state wanneer data gewist is */}
+        {!hasData ? (
+          <div className="bg-white rounded-xl border border-zinc-200 p-8 sm:p-12 text-center">
+            <div className="w-12 h-12 rounded-xl bg-[#111111] text-white flex items-center justify-center mx-auto mb-4">
+              <FileSpreadsheet className="w-6 h-6 text-[#E50056]" />
+            </div>
+            <h2 className="text-xl font-bold text-[#111111] mb-2">
+              De applicatie is momenteel leeg
+            </h2>
+            <p className="text-sm text-zinc-600 max-w-md mx-auto mb-6 leading-relaxed">
+              Er zijn geen resultaten geladen. Upload het Excel-bestand met de vragenlijstresultaten (werkblad <strong>Invoerblad</strong>) om de analyse te starten.
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-3">
               <button
-                onClick={handleExportExcel}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white text-[#111111] border border-zinc-300 hover:border-[#111111] rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                onClick={() => setUploadModalOpen(true)}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-[#E50056] hover:bg-[#C20048] text-white font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5" />
-                Exporteer Excel
+                <Upload className="w-4 h-4" />
+                <span>Upload Excel-bestand</span>
+              </button>
+              <button
+                onClick={handleResetToSample}
+                className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-300 bg-white hover:border-[#111111] text-[#111111] font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
+              >
+                <RotateCcw className="w-4 h-4" />
+                <span>Voorbeelddata laden</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Filter balk (Eigen groep / Totaal / HAN) */}
+            <GroupFilterBar
+              mode={filterMode}
+              selectedStudentNumber={selectedStudentNumber}
+              studentNumbers={studentNumbers}
+              totalCount={allPupilRecords.length}
+              hanCount={hanRecords.length}
+              ownCount={ownGroupRecords.length}
+              showBenchmark={showBenchmark}
+              onModeChange={setFilterMode}
+              onStudentNumberChange={setSelectedStudentNumber}
+              onToggleBenchmark={setShowBenchmark}
+            />
+
+            {/* Tab navigatie (HAN underline/segmented stijl) */}
+            <div className="flex items-center gap-2 border-b border-zinc-200 mb-6 overflow-x-auto">
+              <button
+                onClick={() => setActiveMainTab('schalen')}
+                className={`inline-flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  activeMainTab === 'schalen'
+                    ? 'border-[#E50056] text-[#E50056]'
+                    : 'border-transparent text-zinc-600 hover:text-[#111111]'
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span>15 Schalen Analyse</span>
+              </button>
+
+              <button
+                onClick={() => setActiveMainTab('vragen')}
+                className={`inline-flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  activeMainTab === 'vragen'
+                    ? 'border-[#E50056] text-[#E50056]'
+                    : 'border-transparent text-zinc-600 hover:text-[#111111]'
+                }`}
+              >
+                <ListOrdered className="w-4 h-4" />
+                <span>75 Vragen Detailverkenner</span>
+              </button>
+
+              <button
+                onClick={() => setActiveMainTab('advies')}
+                className={`inline-flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  activeMainTab === 'advies'
+                    ? 'border-[#E50056] text-[#E50056]'
+                    : 'border-transparent text-zinc-600 hover:text-[#111111]'
+                }`}
+              >
+                <Compass className="w-4 h-4" />
+                <span>Pedagogische Inzichten</span>
+              </button>
+
+              <button
+                onClick={() => setActiveMainTab('data')}
+                className={`inline-flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
+                  activeMainTab === 'data'
+                    ? 'border-[#E50056] text-[#E50056]'
+                    : 'border-transparent text-zinc-600 hover:text-[#111111]'
+                }`}
+              >
+                <Table className="w-4 h-4" />
+                <span className="font-mono-nums">Respondenten ({records.length})</span>
               </button>
             </div>
 
-            <div className="mb-4 p-3.5 rounded-lg bg-zinc-50 border border-zinc-200 text-xs text-zinc-700 flex items-start gap-2.5">
-              <Info className="w-4 h-4 text-[#E50056] shrink-0 mt-0.5" />
-              <span>
-                <strong className="text-[#111111]">Anonimiteit &amp; Groepsniveau:</strong> Studenten die met de code <strong className="text-[#E50056]">"HAN"</strong> hebben ingelogd zijn anoniem samengevoegd tot één docentengroep. Individuele studenten zijn hierdoor niet te herleiden; de tool is bedoeld voor analyse op klas- en groepsniveau.
-              </span>
-            </div>
+            {/* Tab 1: Schalenanalyse */}
+            {activeMainTab === 'schalen' && (
+              <div>
+                <ComparisonOverview
+                  comparisonData={comparisonData}
+                  scales={SCALE_DEFINITIONS}
+                  currentMode={filterMode}
+                  selectedStudentNumber={selectedStudentNumber}
+                  showBenchmark={showBenchmark}
+                  onSelectScale={(scale) => setSelectedScale(scale)}
+                />
 
-            <div className="overflow-x-auto max-h-[550px] border border-zinc-200 rounded-lg">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-[#111111] text-white font-semibold sticky top-0 z-10">
-                  <tr>
-                    <th className="p-3">#</th>
-                    <th className="p-3">Klas / Groep</th>
-                    <th className="p-3">Type</th>
-                    <th className="p-3">Vak</th>
-                    <th className="p-3 text-right">Ingevulde Vragen</th>
-                    <th className="p-3 text-right">Gemiddelde Score</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-zinc-200">
-                  {records.map((r, idx) => {
-                    const answeredCount = Object.keys(r.answers).length;
-                    const vals = Object.values(r.answers);
-                    const avg = vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : '-';
-                    const isHan = r.group.toUpperCase() === 'HAN';
+                <PedagogicalInsights
+                  comparisonData={comparisonData}
+                  scales={SCALE_DEFINITIONS}
+                  currentMode={filterMode}
+                  selectedStudentNumber={selectedStudentNumber}
+                  onSelectScale={(scale) => setSelectedScale(scale)}
+                />
+              </div>
+            )}
 
-                    return (
-                      <tr key={idx} className="hover:bg-zinc-50 transition-colors">
-                        <td className="p-3 text-zinc-500 font-mono-nums">{r.id || idx + 1}</td>
-                        <td className="p-3 font-semibold text-[#111111] font-mono-nums">
-                          {r.group}
-                        </td>
-                        <td className="p-3">
-                          <span className={isHan ? 'font-bold text-[#E50056]' : 'font-medium text-zinc-700'}>
-                            {isHan ? 'Docent (HAN)' : 'Leerling'}
-                          </span>
-                        </td>
-                        <td className="p-3 text-zinc-600">{r.subject || 'Algemeen'}</td>
-                        <td className="p-3 text-zinc-600 text-right font-mono-nums">{answeredCount} / 75</td>
-                        <td className="p-3 font-bold text-[#111111] text-right font-mono-nums">{avg}</td>
+            {/* Tab 2: Vragenlijst 75 Items */}
+            {activeMainTab === 'vragen' && (
+              <QuestionsExplorer
+                questions={ALL_QUESTIONS}
+                scales={SCALE_DEFINITIONS}
+                questionAverages={activeStats.questionAverages}
+                questionStdDevs={activeStats.questionStdDevs}
+                questionDistributions={activeStats.questionDistributions}
+                totalQuestionAverages={totalStats.questionAverages}
+                hanQuestionAverages={hanStats.questionAverages}
+                currentMode={filterMode}
+                selectedStudentNumber={selectedStudentNumber}
+                showBenchmark={showBenchmark}
+                initialScaleFilter={questionsScaleFilter}
+                currentGroupName={
+                  filterMode === 'student'
+                    ? `klas (${selectedStudentNumber})`
+                    : filterMode === 'han'
+                    ? 'groep "HAN"'
+                    : 'het totaal van alle leerlingen'
+                }
+              />
+            )}
+
+            {/* Tab 3: Pedagogische Adviezen */}
+            {activeMainTab === 'advies' && (
+              <PedagogicalInsights
+                comparisonData={comparisonData}
+                scales={SCALE_DEFINITIONS}
+                currentMode={filterMode}
+                selectedStudentNumber={selectedStudentNumber}
+                onSelectScale={(scale) => setSelectedScale(scale)}
+              />
+            )}
+
+            {/* Tab 4: Ruwe Data & Respondentenlijst */}
+            {activeMainTab === 'data' && (
+              <div className="bg-white rounded-xl border border-zinc-200 p-5 sm:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h3 className="text-lg font-bold text-[#111111]">
+                      Respondentenoverzicht
+                    </h3>
+                    <p className="text-xs text-zinc-500">
+                      Alle ingelezen rijen uit het Invoerblad van het Excel-bestand
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleExportExcel}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white text-[#111111] border border-zinc-300 hover:border-[#111111] rounded-lg text-xs font-semibold transition-colors cursor-pointer"
+                  >
+                    <Download className="w-3.5 h-3.5" />
+                    Exporteer Excel
+                  </button>
+                </div>
+
+                <div className="mb-4 p-3.5 rounded-lg bg-zinc-50 border border-zinc-200 text-xs text-zinc-700 flex items-start gap-2.5">
+                  <Info className="w-4 h-4 text-[#E50056] shrink-0 mt-0.5" />
+                  <span>
+                    <strong className="text-[#111111]">Anonimiteit &amp; Groepsniveau:</strong> Studenten die met de code <strong className="text-[#E50056]">"HAN"</strong> hebben ingelogd zijn anoniem samengevoegd tot één docentengroep. Individuele studenten zijn hierdoor niet te herleiden; de tool is bedoeld voor analyse op klas- en groepsniveau.
+                  </span>
+                </div>
+
+                <div className="overflow-x-auto max-h-[550px] border border-zinc-200 rounded-lg">
+                  <table className="w-full text-left text-xs border-collapse">
+                    <thead className="bg-[#111111] text-white font-semibold sticky top-0 z-10">
+                      <tr>
+                        <th className="p-3">#</th>
+                        <th className="p-3">Klas / Groep</th>
+                        <th className="p-3">Type</th>
+                        <th className="p-3">Vak</th>
+                        <th className="p-3 text-right">Ingevulde Vragen</th>
+                        <th className="p-3 text-right">Gemiddelde Score</th>
                       </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-200">
+                      {records.map((r, idx) => {
+                        const answeredCount = Object.keys(r.answers).length;
+                        const vals = Object.values(r.answers);
+                        const avg = vals.length > 0 ? (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(2) : '-';
+                        const isHan = r.group.toUpperCase() === 'HAN';
+
+                        return (
+                          <tr key={idx} className="hover:bg-zinc-50 transition-colors">
+                            <td className="p-3 text-zinc-500 font-mono-nums">{r.id || idx + 1}</td>
+                            <td className="p-3 font-semibold text-[#111111] font-mono-nums">
+                              {r.group}
+                            </td>
+                            <td className="p-3">
+                              <span className={isHan ? 'font-bold text-[#E50056]' : 'font-medium text-zinc-700'}>
+                                {isHan ? 'Docent (HAN)' : 'Leerling'}
+                              </span>
+                            </td>
+                            <td className="p-3 text-zinc-600">{r.subject || 'Algemeen'}</td>
+                            <td className="p-3 text-zinc-600 text-right font-mono-nums">{answeredCount} / 75</td>
+                            <td className="p-3 font-bold text-[#111111] text-right font-mono-nums">{avg}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </>
         )}
       </main>
 
