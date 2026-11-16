@@ -4,12 +4,8 @@ import {
   ListOrdered, 
   Compass, 
   Table, 
-  FileSpreadsheet, 
   Download, 
-  Info,
-  Layers,
-  Sparkles,
-  School
+  Info
 } from 'lucide-react';
 import { ALL_QUESTIONS, SCALE_DEFINITIONS } from './data/surveyDefinitions';
 import { RespondentRecord, ScaleDefinition } from './types/survey';
@@ -74,14 +70,12 @@ export default function App() {
     return Array.from(nums).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
   }, [records]);
 
-  // Set default student number if not set
   useEffect(() => {
     if (!selectedStudentNumber && studentNumbers.length > 0) {
       setSelectedStudentNumber(studentNumbers[0]);
     }
   }, [studentNumbers, selectedStudentNumber]);
 
-  // Partition records
   const hanRecords = useMemo(() => {
     return records.filter((r) => r.group.toUpperCase() === 'HAN');
   }, [records]);
@@ -94,7 +88,6 @@ export default function App() {
     return records.filter((r) => r.group === selectedStudentNumber);
   }, [records, selectedStudentNumber]);
 
-  // Compute Statistics
   const totalStats = useMemo(() => {
     return calculateGroupStats(
       allPupilRecords,
@@ -123,25 +116,21 @@ export default function App() {
     );
   }, [ownGroupRecords, selectedStudentNumber]);
 
-  // Active statistics according to current selected mode
   const activeStats = useMemo(() => {
     if (filterMode === 'han') return hanStats;
     if (filterMode === 'student') return ownGroupStats || totalStats;
     return totalStats;
   }, [filterMode, hanStats, ownGroupStats, totalStats]);
 
-  // Comparison benchmark list
   const comparisonData = useMemo(() => {
     return buildComparisonList(ownGroupStats, totalStats, hanStats, SCALE_DEFINITIONS);
   }, [ownGroupStats, totalStats, hanStats]);
 
-  // Selected comparison item for modal
   const selectedComparisonItem = useMemo(() => {
     if (!selectedScale) return null;
     return comparisonData.find((item) => item.scaleId === selectedScale.id) || null;
   }, [selectedScale, comparisonData]);
 
-  // Handlers
   const handleDataLoaded = (newRecords: RespondentRecord[], fileName: string) => {
     setRecords(newRecords);
     setIsCustomData(true);
@@ -150,7 +139,6 @@ export default function App() {
     localStorage.setItem('zr_is_custom', 'true');
     localStorage.setItem('zr_filename', fileName);
 
-    // Auto select first student number
     const newStudentNums = Array.from(
       new Set(newRecords.filter((r) => r.group.toUpperCase() !== 'HAN').map((r) => r.group))
     );
@@ -185,7 +173,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 antialiased selection:bg-blue-100 selection:text-blue-900 pb-16">
+    <div className="min-h-screen bg-[#F6F6F7] text-[#111111] antialiased selection:bg-[#E50056]/15 selection:text-[#E50056] pb-16">
       {/* App Header */}
       <Header
         isCustomData={isCustomData}
@@ -198,25 +186,28 @@ export default function App() {
 
       {/* Main Container */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 pt-6">
-        {/* Intro banner */}
-        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-gradient-to-r from-blue-900 to-indigo-900 text-white p-5 sm:p-6 rounded-2xl shadow-sm">
+        {/* HAN Hero Banner (Zwart/Wit/Rood) */}
+        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4 bg-[#111111] text-white p-6 sm:p-7 rounded-xl">
           <div>
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-blue-500/20 border border-blue-400/30 text-[11px] font-semibold text-blue-200 mb-2">
-              <Sparkles className="w-3.5 h-3.5" />
-              Zelfregulerend Leren Analyseplatform
-            </span>
-            <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight">
-              Analyse & Vergelijking Vragenlijst
-            </h2>
-            <p className="text-xs sm:text-sm text-blue-100/90 mt-1 max-w-2xl">
-              Analyseer de 15 schalen en 75 stellingen. Sorteer op jouw eigen studentnummer, bekijk de landelijke benchmark of vergelijk direct met de docentgroep (HAN).
+            <div className="flex flex-wrap items-center gap-2 text-xs text-zinc-400 mb-2">
+              <span className="font-bold text-[#E50056]">HAN Lerarenopleiding</span>
+              <span aria-hidden="true">&middot;</span>
+              <span>Vragenlijst Zelfregulerend Leren</span>
+              <span aria-hidden="true">&middot;</span>
+              <span className="font-mono-nums text-zinc-300">N = {records.length} respondenten</span>
+            </div>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white [text-wrap:balance]">
+              Analyse &amp; Vergelijking Zelfregulatietool
+            </h1>
+            <p className="text-xs sm:text-sm text-zinc-300 mt-1.5 max-w-2xl leading-relaxed">
+              Analyseer alle 15 schalen en 75 afzonderlijke stellingen. Sorteer op jouw studentnummer, bekijk het totaal van alle leerlingen of vergelijk met groep "HAN".
             </p>
           </div>
 
           <div className="flex items-center gap-3 shrink-0">
             <button
               onClick={() => setUploadModalOpen(true)}
-              className="px-4 py-2.5 rounded-xl bg-white text-blue-950 font-bold text-xs hover:bg-blue-50 transition shadow-sm cursor-pointer"
+              className="px-5 py-2.5 rounded-lg bg-[#E50056] hover:bg-[#C20048] text-white font-semibold text-xs sm:text-sm transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             >
               Eigen Excel Inlezen
             </button>
@@ -237,14 +228,14 @@ export default function App() {
           onToggleBenchmark={setShowBenchmark}
         />
 
-        {/* Tab navigatie */}
-        <div className="flex items-center gap-2 border-b border-slate-200 pb-3 mb-6 overflow-x-auto">
+        {/* Tab navigatie (HAN underline/segmented stijl) */}
+        <div className="flex items-center gap-2 border-b border-zinc-200 mb-6 overflow-x-auto">
           <button
             onClick={() => setActiveMainTab('schalen')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap ${
+            className={`inline-flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
               activeMainTab === 'schalen'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'border-[#E50056] text-[#E50056]'
+                : 'border-transparent text-zinc-600 hover:text-[#111111]'
             }`}
           >
             <BarChart3 className="w-4 h-4" />
@@ -253,10 +244,10 @@ export default function App() {
 
           <button
             onClick={() => setActiveMainTab('vragen')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap ${
+            className={`inline-flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
               activeMainTab === 'vragen'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'border-[#E50056] text-[#E50056]'
+                : 'border-transparent text-zinc-600 hover:text-[#111111]'
             }`}
           >
             <ListOrdered className="w-4 h-4" />
@@ -265,10 +256,10 @@ export default function App() {
 
           <button
             onClick={() => setActiveMainTab('advies')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap ${
+            className={`inline-flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
               activeMainTab === 'advies'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'border-[#E50056] text-[#E50056]'
+                : 'border-transparent text-zinc-600 hover:text-[#111111]'
             }`}
           >
             <Compass className="w-4 h-4" />
@@ -277,14 +268,14 @@ export default function App() {
 
           <button
             onClick={() => setActiveMainTab('data')}
-            className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold transition cursor-pointer whitespace-nowrap ${
+            className={`inline-flex items-center gap-2 px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
               activeMainTab === 'data'
-                ? 'bg-blue-600 text-white shadow-xs'
-                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                ? 'border-[#E50056] text-[#E50056]'
+                : 'border-transparent text-zinc-600 hover:text-[#111111]'
             }`}
           >
             <Table className="w-4 h-4" />
-            <span>Respondenten ({records.length})</span>
+            <span className="font-mono-nums">Respondenten ({records.length})</span>
           </button>
         </div>
 
@@ -300,7 +291,6 @@ export default function App() {
               onSelectScale={(scale) => setSelectedScale(scale)}
             />
 
-            {/* Inzichten samenvatting onderaan schalen */}
             <PedagogicalInsights
               comparisonData={comparisonData}
               scales={SCALE_DEFINITIONS}
@@ -348,45 +338,45 @@ export default function App() {
 
         {/* Tab 4: Ruwe Data & Respondentenlijst */}
         {activeMainTab === 'data' && (
-          <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs">
+          <div className="bg-white rounded-xl border border-zinc-200 p-5 sm:p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-base font-bold text-slate-900">
+                <h3 className="text-lg font-bold text-[#111111]">
                   Respondentenoverzicht
                 </h3>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-zinc-500">
                   Alle ingelezen rijen uit het Invoerblad van het Excel-bestand
                 </p>
               </div>
               <button
                 onClick={handleExportExcel}
-                className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-semibold hover:bg-emerald-100 transition cursor-pointer"
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 bg-white text-[#111111] border border-zinc-300 hover:border-[#111111] rounded-lg text-xs font-semibold transition-colors cursor-pointer"
               >
-                <Download className="w-3.5 h-3.5 text-emerald-600" />
+                <Download className="w-3.5 h-3.5" />
                 Exporteer Excel
               </button>
             </div>
 
-            <div className="mb-4 p-3.5 rounded-xl bg-blue-50/70 border border-blue-200 text-xs text-blue-900 flex items-start gap-2.5">
-              <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+            <div className="mb-4 p-3.5 rounded-lg bg-zinc-50 border border-zinc-200 text-xs text-zinc-700 flex items-start gap-2.5">
+              <Info className="w-4 h-4 text-[#E50056] shrink-0 mt-0.5" />
               <span>
-                <strong>Anonimiteit & Groepsniveau:</strong> Studenten die met de code <strong>"HAN"</strong> hebben ingelogd zijn anoniem samengevoegd tot één docentengroep. Individuele studenten zijn hierdoor niet te herleiden; de tool is bedoeld voor analyse op klas- en groepsniveau.
+                <strong className="text-[#111111]">Anonimiteit &amp; Groepsniveau:</strong> Studenten die met de code <strong className="text-[#E50056]">"HAN"</strong> hebben ingelogd zijn anoniem samengevoegd tot één docentengroep. Individuele studenten zijn hierdoor niet te herleiden; de tool is bedoeld voor analyse op klas- en groepsniveau.
               </span>
             </div>
 
-            <div className="overflow-x-auto max-h-[550px] border border-slate-200 rounded-xl">
+            <div className="overflow-x-auto max-h-[550px] border border-zinc-200 rounded-lg">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-100 text-slate-700 font-semibold sticky top-0 z-10">
+                <thead className="bg-[#111111] text-white font-semibold sticky top-0 z-10">
                   <tr>
-                    <th className="p-3 border-b border-slate-200">#</th>
-                    <th className="p-3 border-b border-slate-200">Klas / Groep</th>
-                    <th className="p-3 border-b border-slate-200">Type</th>
-                    <th className="p-3 border-b border-slate-200">Vak</th>
-                    <th className="p-3 border-b border-slate-200">Ingevulde Vragen</th>
-                    <th className="p-3 border-b border-slate-200">Gemiddelde Score</th>
+                    <th className="p-3">#</th>
+                    <th className="p-3">Klas / Groep</th>
+                    <th className="p-3">Type</th>
+                    <th className="p-3">Vak</th>
+                    <th className="p-3 text-right">Ingevulde Vragen</th>
+                    <th className="p-3 text-right">Gemiddelde Score</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-100">
+                <tbody className="divide-y divide-zinc-200">
                   {records.map((r, idx) => {
                     const answeredCount = Object.keys(r.answers).length;
                     const vals = Object.values(r.answers);
@@ -394,25 +384,19 @@ export default function App() {
                     const isHan = r.group.toUpperCase() === 'HAN';
 
                     return (
-                      <tr key={idx} className="hover:bg-slate-50 transition">
-                        <td className="p-3 text-slate-500">{r.id || idx + 1}</td>
-                        <td className="p-3 font-semibold text-slate-900">
+                      <tr key={idx} className="hover:bg-zinc-50 transition-colors">
+                        <td className="p-3 text-zinc-500 font-mono-nums">{r.id || idx + 1}</td>
+                        <td className="p-3 font-semibold text-[#111111] font-mono-nums">
                           {r.group}
                         </td>
                         <td className="p-3">
-                          <span
-                            className={`px-2 py-0.5 rounded-full text-[10px] font-semibold ${
-                              isHan
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-blue-100 text-blue-800'
-                            }`}
-                          >
+                          <span className={isHan ? 'font-bold text-[#E50056]' : 'font-medium text-zinc-700'}>
                             {isHan ? 'Docent (HAN)' : 'Leerling'}
                           </span>
                         </td>
-                        <td className="p-3 text-slate-600">{r.subject || 'Algemeen'}</td>
-                        <td className="p-3 text-slate-600">{answeredCount} / 75</td>
-                        <td className="p-3 font-bold text-slate-900">{avg}</td>
+                        <td className="p-3 text-zinc-600">{r.subject || 'Algemeen'}</td>
+                        <td className="p-3 text-zinc-600 text-right font-mono-nums">{answeredCount} / 75</td>
+                        <td className="p-3 font-bold text-[#111111] text-right font-mono-nums">{avg}</td>
                       </tr>
                     );
                   })}

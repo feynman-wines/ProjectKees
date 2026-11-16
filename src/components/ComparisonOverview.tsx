@@ -4,13 +4,9 @@ import {
   ArrowUpRight, 
   ArrowDownRight, 
   Minus, 
-  HelpCircle, 
-  ChevronRight,
-  TrendingUp,
-  Layers,
-  Sparkles
+  ChevronRight
 } from 'lucide-react';
-import { ScaleDefinition, ComparisonItem, ScaleCategory } from '../types/survey';
+import { ScaleDefinition, ComparisonItem } from '../types/survey';
 
 interface ComparisonOverviewProps {
   comparisonData: ComparisonItem[];
@@ -31,39 +27,37 @@ export const ComparisonOverview: React.FC<ComparisonOverviewProps> = ({
 }) => {
   const [activeCategory, setActiveCategory] = useState<string>('all');
 
-  const categories: { id: string; label: string; count: number }[] = [
-    { id: 'all', label: 'Alle 15 Schalen', count: 15 },
-    { id: 'voorbereiding', label: '1. Voorbereiding', count: 2 },
-    { id: 'uitvoering', label: '2. Uitvoering', count: 5 },
-    { id: 'reflectie', label: '3. Reflectie', count: 2 },
-    { id: 'motivatie', label: '4. Motivatie (ZDT)', count: 4 },
-    { id: 'zelfeffectiviteit', label: '5. Zelfeffectiviteit', count: 2 },
+  const categories: { id: string; label: string }[] = [
+    { id: 'all', label: 'Alle 15 Schalen' },
+    { id: 'voorbereiding', label: '1. Voorbereiding' },
+    { id: 'uitvoering', label: '2. Uitvoering' },
+    { id: 'reflectie', label: '3. Reflectie' },
+    { id: 'motivatie', label: '4. Motivatie (ZDT)' },
+    { id: 'zelfeffectiviteit', label: '5. Zelfeffectiviteit' },
   ];
 
   const filteredComparison = activeCategory === 'all'
     ? comparisonData
     : comparisonData.filter((item) => item.category === activeCategory);
 
-  // Helper function to render a score bar (1.0 to 5.0)
   const getPercentage = (score: number) => {
-    // 1.0 -> 0%, 5.0 -> 100%
     return Math.max(0, Math.min(100, ((score - 1) / 4) * 100));
   };
 
   return (
-    <div className="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs mb-8">
+    <div className="bg-white rounded-xl border border-zinc-200 p-5 sm:p-6 mb-8">
       {/* Header & Tabs */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-slate-100">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-zinc-200">
         <div>
           <div className="flex items-center gap-2 mb-1">
-            <BarChart2 className="w-5 h-5 text-blue-600" />
-            <h2 className="text-lg font-bold text-slate-900">
+            <BarChart2 className="w-5 h-5 text-[#E50056]" />
+            <h2 className="text-xl font-bold text-[#111111]">
               Analyseresultaten per Schaal (1 t/m 5)
             </h2>
           </div>
-          <p className="text-xs text-slate-500">
+          <p className="text-xs text-zinc-500">
             {currentMode === 'student'
-              ? `Scores voor studentnummer ${selectedStudentNumber} ${showBenchmark ? 'vergeleken met totaal leerlingen en groep HAN' : ''}`
+              ? `Scores voor studentnummer ${selectedStudentNumber}${showBenchmark ? ' vergeleken met totaal leerlingen en groep HAN' : ''}`
               : currentMode === 'han'
               ? 'Scores van groep "HAN" (Lerarenopleiding studenten)'
               : 'Gemiddelde score over alle deelnemende middelbare schoolleerlingen'}
@@ -76,10 +70,10 @@ export const ComparisonOverview: React.FC<ComparisonOverviewProps> = ({
             <button
               key={cat.id}
               onClick={() => setActiveCategory(cat.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap cursor-pointer ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors whitespace-nowrap shrink-0 cursor-pointer ${
                 activeCategory === cat.id
-                  ? 'bg-slate-900 text-white shadow-xs'
-                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                  ? 'bg-[#111111] text-white'
+                  : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'
               }`}
             >
               {cat.label}
@@ -88,27 +82,27 @@ export const ComparisonOverview: React.FC<ComparisonOverviewProps> = ({
         </div>
       </div>
 
-      {/* Legenda (wanneer benchmark aan staat) */}
+      {/* Legenda (unboxed met kleurblokjes) */}
       {showBenchmark && (
-        <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200 flex flex-wrap items-center gap-4 text-xs font-medium text-slate-700">
-          <span className="text-slate-500 font-semibold uppercase text-[10px] tracking-wider">Legenda:</span>
+        <div className="mt-4 py-2.5 px-3 bg-zinc-50 rounded-lg border border-zinc-200 flex flex-wrap items-center gap-5 text-xs font-medium text-zinc-700">
+          <span className="text-zinc-500 font-semibold">Legenda:</span>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-sm bg-indigo-600"></span>
-            <span>{currentMode === 'student' ? `Klas (${selectedStudentNumber})` : currentMode === 'han' ? 'Groep HAN' : 'Geselecteerde Groep'}</span>
+            <span className="w-3 h-3 rounded-xs bg-[#E50056]"></span>
+            <span>{currentMode === 'student' ? `Eigen Klas (${selectedStudentNumber})` : 'Eigen Klas'}</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-sm bg-blue-400"></span>
-            <span>Totaal alle leerlingen (Benchmark)</span>
+            <span className="w-3 h-3 rounded-xs bg-zinc-500"></span>
+            <span>Totaal alle leerlingen</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded-sm bg-emerald-500"></span>
+            <span className="w-3 h-3 rounded-xs bg-[#111111]"></span>
             <span>Groep "HAN" (Docenten)</span>
           </div>
         </div>
       )}
 
       {/* Schalen Lijst */}
-      <div className="mt-6 space-y-4">
+      <div className="mt-6 divide-y divide-zinc-200 border-t border-b border-zinc-200">
         {filteredComparison.map((item, idx) => {
           const scaleDef = scales.find((s) => s.id === item.scaleId) || scales[0];
           const activeScore = currentMode === 'student' 
@@ -121,39 +115,38 @@ export const ComparisonOverview: React.FC<ComparisonOverviewProps> = ({
             <div
               key={item.scaleId}
               onClick={() => onSelectScale(scaleDef)}
-              className="group p-4 rounded-xl border border-slate-200 hover:border-blue-400 hover:shadow-md transition-all cursor-pointer bg-white"
+              className="group py-4 px-2 sm:px-3 hover:bg-zinc-50 transition-colors cursor-pointer"
             >
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs flex items-center justify-center group-hover:bg-blue-50 group-hover:text-blue-700 transition">
-                    {idx + 1}
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-1.5">
+                <div className="flex items-baseline gap-2.5">
+                  <span className="font-mono-nums text-xs font-bold text-[#E50056]">
+                    {String(idx + 1).padStart(2, '0')}.
                   </span>
-                  <h3 className="font-semibold text-slate-900 group-hover:text-blue-600 transition text-sm sm:text-base">
+                  <h3 className="font-bold text-[#111111] group-hover:text-[#E50056] transition-colors text-base">
                     {item.scaleName}
                   </h3>
-                  <span className="text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded-full bg-slate-100 text-slate-500">
-                    {scaleDef.categoryName.split(' ')[0]}
+                  <span className="text-xs text-zinc-400 hidden sm:inline">
+                    &middot; {scaleDef.categoryName.split(' ')[0]}
                   </span>
                 </div>
 
-                {/* Score en delta badges */}
-                <div className="flex items-center gap-3">
-                  <div className="text-right">
-                    <span className="text-lg font-extrabold text-slate-900">
+                {/* Score en delta */}
+                <div className="flex items-center gap-4">
+                  <div className="text-right font-mono-nums">
+                    <span className="text-lg font-bold text-[#111111]">
                       {activeScore.toFixed(2)}
                     </span>
-                    <span className="text-xs text-slate-400 font-normal"> / 5.0</span>
+                    <span className="text-xs text-zinc-400"> / 5.00</span>
                   </div>
 
-                  {/* Delta met totaal indien student view */}
                   {currentMode === 'student' && item.deltaWithTotal !== null && (
                     <div
-                      className={`flex items-center gap-0.5 text-xs font-bold px-2 py-1 rounded-md ${
+                      className={`inline-flex items-center gap-0.5 text-xs font-mono-nums font-bold px-2 py-0.5 rounded-md ${
                         item.deltaWithTotal > 0.1
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                          ? 'bg-emerald-50 text-emerald-700'
                           : item.deltaWithTotal < -0.1
-                          ? 'bg-rose-50 text-rose-700 border border-rose-200'
-                          : 'bg-slate-100 text-slate-600'
+                          ? 'bg-rose-50 text-[#E50056]'
+                          : 'bg-zinc-100 text-zinc-600'
                       }`}
                       title="Verschil met het gemiddelde van alle leerlingen"
                     >
@@ -168,50 +161,39 @@ export const ComparisonOverview: React.FC<ComparisonOverviewProps> = ({
                     </div>
                   )}
 
-                  <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-blue-600 group-hover:translate-x-1 transition" />
+                  <ChevronRight className="w-4 h-4 text-zinc-300 group-hover:text-[#E50056] transition-colors" />
                 </div>
               </div>
 
-              {/* Korte toelichting van de schaal */}
-              <p className="text-xs text-slate-500 mb-3 line-clamp-1">
+              <p className="text-xs text-zinc-500 mb-3 line-clamp-1">
                 {scaleDef.description}
               </p>
 
-              {/* Staafdiagrammen / Progress bars */}
+              {/* Voortgangsbalk */}
               <div className="space-y-2">
-                {/* Primaire balk */}
-                <div>
-                  <div className="w-full bg-slate-100 h-3 rounded-full overflow-hidden flex">
-                    <div
-                      className={`h-full rounded-full transition-all duration-500 ${
-                        currentMode === 'student'
-                          ? 'bg-indigo-600'
-                          : currentMode === 'han'
-                          ? 'bg-emerald-600'
-                          : 'bg-blue-600'
-                      }`}
-                      style={{ width: `${getPercentage(activeScore)}%` }}
-                    />
-                  </div>
+                <div className="w-full bg-zinc-100 h-2.5 rounded-sm overflow-hidden flex">
+                  <div
+                    className={`h-full transition-all duration-300 ${
+                      currentMode === 'student'
+                        ? 'bg-[#E50056]'
+                        : currentMode === 'han'
+                        ? 'bg-[#111111]'
+                        : 'bg-zinc-700'
+                    }`}
+                    style={{ width: `${getPercentage(activeScore)}%` }}
+                  />
                 </div>
 
-                {/* Benchmark balken indien aan */}
                 {showBenchmark && currentMode === 'student' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] text-slate-500 pt-1">
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-blue-400"></span>
-                        Totaal alle leerlingen:
-                      </span>
-                      <span className="font-semibold text-slate-700">{item.totalScore.toFixed(2)}</span>
-                    </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <span className="flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                        Groep "HAN" docenten:
-                      </span>
-                      <span className="font-semibold text-slate-700">{item.hanScore.toFixed(2)}</span>
-                    </div>
+                  <div className="flex flex-wrap items-center gap-6 text-xs text-zinc-500 pt-0.5 font-mono-nums">
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-xs bg-zinc-500"></span>
+                      Totaal leerlingen: <strong className="text-[#111111]">{item.totalScore.toFixed(2)}</strong>
+                    </span>
+                    <span className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-xs bg-[#111111]"></span>
+                      Groep "HAN": <strong className="text-[#111111]">{item.hanScore.toFixed(2)}</strong>
+                    </span>
                   </div>
                 )}
               </div>

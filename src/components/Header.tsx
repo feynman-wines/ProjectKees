@@ -1,12 +1,5 @@
 import React from 'react';
-import { 
-  GraduationCap, 
-  Upload, 
-  RotateCcw, 
-  Download, 
-  FileSpreadsheet, 
-  BarChart3 
-} from 'lucide-react';
+import { Upload, RotateCcw, Download } from 'lucide-react';
 import { PWAInstallButton } from './PWAInstallButton';
 
 interface HeaderProps {
@@ -27,71 +20,62 @@ export const Header: React.FC<HeaderProps> = ({
   onExportExcel,
 }) => {
   return (
-    <header className="border-b border-slate-200 bg-white sticky top-0 z-40 shadow-xs">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
-        {/* Brand & Titel */}
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-900 text-white flex items-center justify-center font-bold shadow-sm shadow-blue-900/20">
-            <GraduationCap className="w-5 h-5 text-blue-200" />
+    <header className="bg-white border-b border-zinc-200 sticky top-0 z-40">
+      {/* HAN kenmerkende rode bovenlijn */}
+      <div className="h-1 w-full bg-[#E50056]" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-6">
+        {/* Zone 1: HAN Merknaam (strak, één regel) */}
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="px-2.5 py-1 bg-[#E50056] text-white font-display font-extrabold text-sm tracking-tight rounded-sm select-none">
+            HAN
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h1 className="font-bold text-slate-900 text-base leading-tight">
-                Zelfregulatietool Analyse
-              </h1>
-              <span className="text-[11px] font-semibold tracking-wide uppercase px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                HAN Nijmegen
-              </span>
-            </div>
-            <p className="text-xs text-slate-500 hidden sm:block">
-              Lerarenopleiding &bull; Vragenlijst Zelfregulerend Leren
-            </p>
-          </div>
+          <span className="font-display font-bold text-[#111111] text-base sm:text-lg tracking-tight whitespace-nowrap">
+            Zelfregulatietool Analyse
+          </span>
         </div>
 
-        {/* Dataset status & Actieknoppen */}
-        <div className="flex items-center gap-2 sm:gap-3">
-          {/* Status badge */}
-          <div className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-100 text-xs font-medium text-slate-700 border border-slate-200">
-            <FileSpreadsheet className="w-3.5 h-3.5 text-slate-500" />
-            <span>{isCustomData ? `Bestand: ${fileName || 'Geüpload'}` : 'Voorbeeld-dataset (Actief)'}</span>
-            <span className="text-slate-400">&bull;</span>
-            <span className="text-blue-700 font-semibold">{totalRespondents} respondenten</span>
-          </div>
+        {/* Zone 2: Dataset status (unboxed typografie) */}
+        <div className="hidden lg:flex items-center gap-2 text-xs text-zinc-500 whitespace-nowrap truncate">
+          <span className="font-medium text-zinc-700">
+            {isCustomData ? fileName || 'Eigen dataset' : 'Voorbeeld-dataset'}
+          </span>
+          <span aria-hidden="true">&middot;</span>
+          <span className="font-mono-nums font-semibold text-[#111111]">
+            {totalRespondents} respondenten
+          </span>
+        </div>
 
-          {/* Upload knop */}
-          <button
-            onClick={onOpenUpload}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-white border border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition cursor-pointer"
-            title="Excel-bestand uploaden"
-          >
-            <Upload className="w-3.5 h-3.5 text-blue-600" />
-            <span className="hidden sm:inline">Upload Excel</span>
-          </button>
-
-          {/* Reset naar voorbeeld */}
+        {/* Zone 3: Acties */}
+        <div className="flex items-center gap-2 shrink-0">
           {isCustomData && (
             <button
               onClick={onResetToSample}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 transition cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold rounded-lg text-zinc-600 hover:text-[#111111] hover:bg-zinc-100 transition-colors whitespace-nowrap shrink-0 cursor-pointer"
               title="Terug naar voorbeeld-dataset"
             >
               <RotateCcw className="w-3.5 h-3.5" />
-              <span className="hidden lg:inline">Voorbeeld</span>
+              <span className="hidden md:inline">Voorbeeld</span>
             </button>
           )}
 
-          {/* Export Excel */}
           <button
             onClick={onExportExcel}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-50 border border-emerald-300 text-emerald-800 hover:bg-emerald-100 transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold rounded-lg bg-white border border-zinc-300 text-[#111111] hover:border-[#111111] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
             title="Exporteer resultaten naar Excel"
           >
-            <Download className="w-3.5 h-3.5 text-emerald-600" />
-            <span className="hidden sm:inline">Exporteer</span>
+            <Download className="w-3.5 h-3.5 text-[#111111]" />
+            <span className="hidden sm:inline">Exporteer Excel</span>
           </button>
 
-          {/* PWA Install Button */}
+          <button
+            onClick={onOpenUpload}
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg bg-[#E50056] text-white hover:bg-[#C20048] transition-colors whitespace-nowrap shrink-0 cursor-pointer"
+            title="Excel-bestand uploaden"
+          >
+            <Upload className="w-3.5 h-3.5" />
+            <span>Upload Excel</span>
+          </button>
+
           <PWAInstallButton />
         </div>
       </div>

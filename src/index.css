@@ -1,1 +1,26 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    --han-red: #E50056;
+    --han-red-hover: #C20048;
+    --han-black: #111111;
+    --han-canvas: #F6F6F7;
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: var(--han-canvas);
+    color: var(--han-black);
+  }
+
+  h1, h2, h3, h4, .font-display {
+    font-family: 'Barlow', 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.015em;
+  }
+
+  .font-mono-nums {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
