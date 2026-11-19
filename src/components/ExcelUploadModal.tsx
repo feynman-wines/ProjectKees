@@ -98,11 +98,11 @@ export const ExcelUploadModal: React.FC<ExcelUploadModalProps> = ({
           <div className="p-4 rounded-lg bg-zinc-50 border border-zinc-200 text-xs text-zinc-700 flex items-start gap-3">
             <Info className="w-4 h-4 text-[#E50056] shrink-0 mt-0.5" />
             <div>
-              <p className="font-bold text-[#111111] mb-1">Verwachte structuur in het bestand:</p>
+              <p className="font-bold text-[#111111] mb-1">Ondersteunde Excel-structuren:</p>
               <ul className="list-disc list-inside space-y-0.5">
-                <li>Werkblad: <strong>Invoerblad</strong></li>
-                <li>Kolom <strong>Klas / groep</strong>: Bevat "HAN" (studenten) of studentnummer (leerlingen)</li>
-                <li>Kolommen <strong>Vraag 1 t/m Vraag 75</strong>: Bevatten scores van 1 t/m 5</li>
+                <li><strong>Microsoft Forms export</strong> (kolommen Nummer/Klas/Vak en tekstantwoorden)</li>
+                <li>Of werkblad <strong>Invoerblad</strong> met kolommen <strong>Klas / groep</strong> en <strong>Vraag 1 t/m 75</strong> (1 t/m 5)</li>
+                <li>Studenten die <strong>"HAN"</strong> invulden worden automatisch gegroepeerd</li>
               </ul>
             </div>
           </div>

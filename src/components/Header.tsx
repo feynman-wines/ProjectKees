@@ -43,7 +43,7 @@ export const Header: React.FC<HeaderProps> = ({
               ? 'Geen dataset geladen'
               : isCustomData
               ? fileName || 'Eigen dataset'
-              : 'Voorbeeld-dataset'}
+              : 'Vragenlijst 1-350'}
           </span>
           <span aria-hidden="true">&middot;</span>
           <span className="font-mono-nums font-semibold text-[#111111]">

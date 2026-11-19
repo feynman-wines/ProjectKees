@@ -168,11 +168,13 @@ export const QuestionsExplorer: React.FC<QuestionsExplorerProps> = ({
           </div>
         ) : (
           sortedQuestions.map((q) => {
-            const avg = questionAverages[q.number] ?? 0;
+            const rawAvg = questionAverages[q.number];
+            const hasScore = rawAvg !== undefined;
+            const avg = rawAvg ?? 0;
             const std = questionStdDevs[q.number] ?? 0;
             const totalAvg = totalQuestionAverages[q.number] ?? 0;
             const hanAvg = hanQuestionAverages[q.number] ?? 0;
-            const deltaTotal = Number((avg - totalAvg).toFixed(2));
+            const deltaTotal = hasScore && totalAvg > 0 ? Number((avg - totalAvg).toFixed(2)) : null;
             const dist = questionDistributions[q.number] || { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
             const totalResponses = dist[1] + dist[2] + dist[3] + dist[4] + dist[5];
             const denom = totalResponses || 1;
@@ -208,7 +210,7 @@ export const QuestionsExplorer: React.FC<QuestionsExplorerProps> = ({
 
                   {/* Gemiddelde, delta & std dev */}
                   <div className="flex items-center gap-4 shrink-0 border-t md:border-t-0 pt-2 md:pt-0 border-zinc-100">
-                    {currentMode === 'student' && (
+                    {currentMode === 'student' && deltaTotal !== null && (
                       <div
                         className={`inline-flex items-center gap-0.5 text-xs font-mono-nums font-bold px-2 py-0.5 rounded-md ${
                           deltaTotal > 0.1
@@ -231,15 +233,26 @@ export const QuestionsExplorer: React.FC<QuestionsExplorerProps> = ({
                     )}
 
                     <div className="text-right font-mono-nums">
-                      <span className="text-base font-bold text-[#111111]">
-                        {avg.toFixed(2)}
-                      </span>
-                      <span className="text-xs text-zinc-400"> / 5.0</span>
-                      <span className="block text-[10px] text-zinc-400">Gemiddelde</span>
+                      {hasScore ? (
+                        <>
+                          <span className="text-base font-bold text-[#111111]">
+                            {avg.toFixed(2)}
+                          </span>
+                          <span className="text-xs text-zinc-400"> / 5.0</span>
+                          <span className="block text-[10px] text-zinc-400">Gemiddelde</span>
+                        </>
+                      ) : (
+                        <>
+                          <span className="text-xs font-semibold text-zinc-400 block">
+                            Niet ingevuld
+                          </span>
+                          <span className="block text-[10px] text-zinc-400">N = 0</span>
+                        </>
+                      )}
                     </div>
                     <div className="text-right font-mono-nums">
                       <span className="text-xs font-semibold text-zinc-600">
-                        &plusmn; {std.toFixed(2)}
+                        {hasScore ? <>&plusmn; {std.toFixed(2)}</> : '-'}
                       </span>
                       <span className="block text-[10px] text-zinc-400">Spreiding</span>
                     </div>
@@ -252,7 +265,7 @@ export const QuestionsExplorer: React.FC<QuestionsExplorerProps> = ({
                     {currentMode === 'student' && (
                       <span className="flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-xs bg-[#E50056]"></span>
-                        Klas ({selectedStudentNumber}): <strong className="text-[#111111]">{avg.toFixed(2)}</strong>
+                        Klas ({selectedStudentNumber}): <strong className="text-[#111111]">{hasScore ? avg.toFixed(2) : '-'}</strong>
                       </span>
                     )}
                     <span className="flex items-center gap-1.5">

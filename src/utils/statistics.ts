@@ -88,11 +88,12 @@ export function calculateGroupStats(
       }
     });
 
-    const qMean = calculateMean(validScores);
-    const qStd = calculateStdDev(validScores, qMean);
-
-    questionAverages[q] = Number(qMean.toFixed(2));
-    questionStdDevs[q] = Number(qStd.toFixed(2));
+    if (validScores.length > 0) {
+      const qMean = calculateMean(validScores);
+      const qStd = calculateStdDev(validScores, qMean);
+      questionAverages[q] = Number(qMean.toFixed(2));
+      questionStdDevs[q] = Number(qStd.toFixed(2));
+    }
     questionDistributions[q] = dist;
   }
 
@@ -108,11 +109,12 @@ export function calculateGroupStats(
       }
     });
 
-    const sMean = calculateMean(scaleScores);
-    const sStd = calculateStdDev(scaleScores, sMean);
-
-    scaleAverages[scale.name] = Number(sMean.toFixed(2));
-    scaleStdDevs[scale.name] = Number(sStd.toFixed(2));
+    if (scaleScores.length > 0) {
+      const sMean = calculateMean(scaleScores);
+      const sStd = calculateStdDev(scaleScores, sMean);
+      scaleAverages[scale.name] = Number(sMean.toFixed(2));
+      scaleStdDevs[scale.name] = Number(sStd.toFixed(2));
+    }
   });
 
   return {
@@ -138,8 +140,8 @@ export function buildComparisonList(
     const totalScore = totalStats.scaleAverages[scale.name] ?? 0;
     const hanScore = hanStats.scaleAverages[scale.name] ?? 0;
 
-    const deltaWithTotal = ownScore !== null ? Number((ownScore - totalScore).toFixed(2)) : null;
-    const deltaWithHan = ownScore !== null ? Number((ownScore - hanScore).toFixed(2)) : null;
+    const deltaWithTotal = ownScore !== null && totalScore > 0 ? Number((ownScore - totalScore).toFixed(2)) : null;
+    const deltaWithHan = ownScore !== null && hanScore > 0 ? Number((ownScore - hanScore).toFixed(2)) : null;
 
     return {
       scaleId: scale.id,

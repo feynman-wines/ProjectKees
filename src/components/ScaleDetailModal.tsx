@@ -38,6 +38,12 @@ export const ScaleDetailModal: React.FC<ScaleDetailModalProps> = ({
 
   const relevantQuestions = questions.filter((q) => scale.questions.includes(q.number));
 
+  const hasActiveScore = currentMode === 'student'
+    ? comparisonItem.ownScore !== null
+    : currentMode === 'han'
+    ? comparisonItem.hanScore > 0
+    : comparisonItem.totalScore > 0;
+
   const activeScore = currentMode === 'student'
     ? comparisonItem.ownScore ?? 0
     : currentMode === 'han'
@@ -80,10 +86,18 @@ export const ScaleDetailModal: React.FC<ScaleDetailModalProps> = ({
                 {currentMode === 'student' ? `Klas (${selectedStudentNumber})` : currentMode === 'han' ? 'Groep HAN' : 'Gemiddelde Totaal'}
               </span>
               <div className="mt-1 flex items-baseline gap-1 font-mono-nums">
-                <span className="text-3xl font-extrabold text-[#111111]">
-                  {activeScore.toFixed(2)}
-                </span>
-                <span className="text-xs text-zinc-500">/ 5.0</span>
+                {hasActiveScore ? (
+                  <>
+                    <span className="text-3xl font-extrabold text-[#111111]">
+                      {activeScore.toFixed(2)}
+                    </span>
+                    <span className="text-xs text-zinc-500">/ 5.0</span>
+                  </>
+                ) : (
+                  <span className="text-sm font-semibold text-zinc-400 py-1.5">
+                    Niet ingevuld
+                  </span>
+                )}
               </div>
             </div>
 
@@ -152,7 +166,9 @@ export const ScaleDetailModal: React.FC<ScaleDetailModalProps> = ({
             </div>
             <div className="divide-y divide-zinc-200 border-t border-b border-zinc-200">
               {relevantQuestions.map((q) => {
-                const avg = questionAverages[q.number] ?? 0;
+                const rawAvg = questionAverages[q.number];
+                const hasQScore = rawAvg !== undefined;
+                const avg = rawAvg ?? 0;
                 const std = questionStdDevs[q.number] ?? 0;
                 const totalAvg = totalQuestionAverages[q.number] ?? 0;
                 const hanAvg = hanQuestionAverages[q.number] ?? 0;
@@ -173,11 +189,15 @@ export const ScaleDetailModal: React.FC<ScaleDetailModalProps> = ({
                       <div className="flex items-center gap-4 shrink-0 sm:text-right font-mono-nums">
                         <div>
                           <span className="text-[10px] text-zinc-400 block">Gemiddelde</span>
-                          <span className="font-bold text-[#111111] text-sm">{avg.toFixed(2)}</span>
+                          <span className="font-bold text-[#111111] text-sm">
+                            {hasQScore ? avg.toFixed(2) : '-'}
+                          </span>
                         </div>
                         <div>
                           <span className="text-[10px] text-zinc-400 block">Spreiding</span>
-                          <span className="font-medium text-zinc-600">&plusmn; {std.toFixed(2)}</span>
+                          <span className="font-medium text-zinc-600">
+                            {hasQScore ? <>&plusmn; {std.toFixed(2)}</> : '-'}
+                          </span>
                         </div>
                       </div>
                     </div>

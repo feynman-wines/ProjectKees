@@ -22,14 +22,16 @@ export const PedagogicalInsights: React.FC<PedagogicalInsightsProps> = ({
   selectedStudentNumber,
   onSelectScale,
 }) => {
-  const scoredItems = comparisonData.map((item) => {
-    const score = currentMode === 'student'
-      ? item.ownScore ?? 0
-      : currentMode === 'han'
-      ? item.hanScore
-      : item.totalScore;
-    return { ...item, activeScore: score };
-  });
+  const scoredItems = comparisonData
+    .map((item) => {
+      const score = currentMode === 'student'
+        ? item.ownScore ?? 0
+        : currentMode === 'han'
+        ? item.hanScore
+        : item.totalScore;
+      return { ...item, activeScore: score };
+    })
+    .filter((item) => item.activeScore > 0);
 
   const sortedByScore = [...scoredItems].sort((a, b) => b.activeScore - a.activeScore);
   const topStrengths = sortedByScore.slice(0, 3);

@@ -105,10 +105,15 @@ export const ComparisonOverview: React.FC<ComparisonOverviewProps> = ({
       <div className="mt-6 divide-y divide-zinc-200 border-t border-b border-zinc-200">
         {filteredComparison.map((item, idx) => {
           const scaleDef = scales.find((s) => s.id === item.scaleId) || scales[0];
-          const activeScore = currentMode === 'student' 
-            ? item.ownScore ?? 0 
-            : currentMode === 'han' 
-            ? item.hanScore 
+          const hasActiveScore = currentMode === 'student'
+            ? item.ownScore !== null
+            : currentMode === 'han'
+            ? item.hanScore > 0
+            : item.totalScore > 0;
+          const activeScore = currentMode === 'student'
+            ? item.ownScore ?? 0
+            : currentMode === 'han'
+            ? item.hanScore
             : item.totalScore;
 
           return (
@@ -133,10 +138,18 @@ export const ComparisonOverview: React.FC<ComparisonOverviewProps> = ({
                 {/* Score en delta */}
                 <div className="flex items-center gap-4">
                   <div className="text-right font-mono-nums">
-                    <span className="text-lg font-bold text-[#111111]">
-                      {activeScore.toFixed(2)}
-                    </span>
-                    <span className="text-xs text-zinc-400"> / 5.00</span>
+                    {hasActiveScore ? (
+                      <>
+                        <span className="text-lg font-bold text-[#111111]">
+                          {activeScore.toFixed(2)}
+                        </span>
+                        <span className="text-xs text-zinc-400"> / 5.00</span>
+                      </>
+                    ) : (
+                      <span className="text-xs font-semibold text-zinc-400">
+                        Niet ingevuld
+                      </span>
+                    )}
                   </div>
 
                   {currentMode === 'student' && item.deltaWithTotal !== null && (
@@ -172,16 +185,18 @@ export const ComparisonOverview: React.FC<ComparisonOverviewProps> = ({
               {/* Voortgangsbalk */}
               <div className="space-y-2">
                 <div className="w-full bg-zinc-100 h-2.5 rounded-sm overflow-hidden flex">
-                  <div
-                    className={`h-full transition-all duration-300 ${
-                      currentMode === 'student'
-                        ? 'bg-[#E50056]'
-                        : currentMode === 'han'
-                        ? 'bg-[#111111]'
-                        : 'bg-zinc-700'
-                    }`}
-                    style={{ width: `${getPercentage(activeScore)}%` }}
-                  />
+                  {hasActiveScore && (
+                    <div
+                      className={`h-full transition-all duration-300 ${
+                        currentMode === 'student'
+                          ? 'bg-[#E50056]'
+                          : currentMode === 'han'
+                          ? 'bg-[#111111]'
+                          : 'bg-zinc-700'
+                      }`}
+                      style={{ width: `${getPercentage(activeScore)}%` }}
+                    />
+                  )}
                 </div>
 
                 {showBenchmark && currentMode === 'student' && (

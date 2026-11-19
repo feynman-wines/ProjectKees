@@ -1,12 +1,50 @@
 import * as XLSX from 'xlsx';
 import { RespondentRecord } from '../types/survey';
 
+import { ALL_QUESTIONS } from '../data/surveyDefinitions';
+
 export interface ParseResult {
   records: RespondentRecord[];
   groups: string[]; // List of unique groups, e.g. ["HAN", "304918", "418290"]
   hasHanGroup: boolean;
   totalRespondents: number;
   fileName: string;
+}
+
+const LIKERT_TEXT_MAP: Record<string, number> = {
+  'nooit': 1,
+  'bijna nooit': 2,
+  'soms': 3,
+  'bijna altijd': 4,
+  'altijd': 5,
+  'helemaal niet akkoord': 1,
+  'niet akkoord': 2,
+  'ik weet het niet': 3,
+  'akkoord': 4,
+  'helemaal akkoord': 5,
+};
+
+function normalizeQuestionText(text: string): string {
+  return String(text || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase()
+    .replace(/[‘’'"“”….,?!():]/g, '');
+}
+
+function parseAnswerValue(raw: unknown): number | null {
+  if (raw === undefined || raw === null) return null;
+  const str = String(raw).trim();
+  if (!str) return null;
+
+  const mapped = LIKERT_TEXT_MAP[str.toLowerCase()];
+  if (mapped !== undefined) return mapped;
+
+  const numVal = Number(str);
+  if (!Number.isNaN(numVal) && numVal >= 1 && numVal <= 5) {
+    return numVal;
+  }
+  return null;
 }
 
 export function parseExcelWorkbook(data: ArrayBuffer | Uint8Array, fileName: string): ParseResult {
@@ -35,36 +73,51 @@ export function parseExcelWorkbook(data: ArrayBuffer | Uint8Array, fileName: str
   const headerRow = rawRows[0] || [];
 
   // Identify column indices
-  let groupColIdx = -1;
+  let nummerColIdx = -1;
+  let klasColIdx = -1;
   let subjectColIdx = -1;
   let idColIdx = 0;
   const questionColMap: Record<number, number> = {}; // questionNumber -> columnIndex
 
+  const normalizedQuestionLookup = new Map<string, number>();
+  ALL_QUESTIONS.forEach((q) => {
+    normalizedQuestionLookup.set(normalizeQuestionText(q.text), q.number);
+  });
+
   headerRow.forEach((col: any, idx: number) => {
     const colStr = String(col || '').trim().toLowerCase();
-    if (colStr.includes('klas') || colStr.includes('groep') || colStr.includes('studentnummer')) {
-      groupColIdx = idx;
+    if (colStr === 'nummer' || colStr.includes('studentnummer') || colStr.includes('groep')) {
+      nummerColIdx = idx;
+    } else if (colStr === 'klas' || colStr.includes('klas /')) {
+      klasColIdx = idx;
     } else if (colStr.includes('vak') || colStr.includes('activiteit')) {
       subjectColIdx = idx;
-    } else if (colStr.includes('leerling') || colStr.includes('id')) {
+    } else if (colStr === 'id' || colStr.includes('leerling')) {
       idColIdx = idx;
     }
 
-    // Match "Vraag 1", "Vraag 1 ", "V1", etc.
-    const match = colStr.match(/(?:vraag|v)?\s*(\d+)/i);
+    // Match "Vraag 1", "Vraag 1 ", "V1"
+    const match = colStr.match(/^(?:vraag|v)\s*(\d+)$/i);
     if (match) {
       const qNum = parseInt(match[1], 10);
       if (qNum >= 1 && qNum <= 75) {
         questionColMap[qNum] = idx;
+        return;
       }
+    }
+
+    // Match full Microsoft Forms question text
+    const normCol = normalizeQuestionText(String(col || ''));
+    const matchedQNum = normalizedQuestionLookup.get(normCol);
+    if (matchedQNum !== undefined) {
+      questionColMap[matchedQNum] = idx;
     }
   });
 
-  // Fallback defaults if not found by header text
-  if (groupColIdx === -1) groupColIdx = 1;
+  const groupColIdx = nummerColIdx !== -1 ? nummerColIdx : klasColIdx !== -1 ? klasColIdx : 1;
   if (subjectColIdx === -1) subjectColIdx = 2;
 
-  // Fallback for question columns if headers weren't named "Vraag X"
+  // Fallback for question columns if headers weren't matched
   if (Object.keys(questionColMap).length < 10) {
     for (let q = 1; q <= 75; q++) {
       questionColMap[q] = 2 + q; // Typically starts at col 3 (0-indexed)
@@ -80,11 +133,18 @@ export function parseExcelWorkbook(data: ArrayBuffer | Uint8Array, fileName: str
     if (!row || row.length === 0) continue;
 
     const rawGroup = row[groupColIdx];
-    if (rawGroup === undefined || rawGroup === null || String(rawGroup).trim() === '') {
+    const rawKlas = klasColIdx !== -1 ? row[klasColIdx] : undefined;
+    const groupStr = rawGroup !== undefined && rawGroup !== null ? String(rawGroup).trim() : '';
+    const klasStr = rawKlas !== undefined && rawKlas !== null ? String(rawKlas).trim() : '';
+
+    if (!groupStr && !klasStr) {
       continue;
     }
 
-    const group = String(rawGroup).trim();
+    const isHan = groupStr.toUpperCase() === 'HAN' || klasStr.toUpperCase() === 'HAN';
+    const group = isHan ? 'HAN' : groupStr || klasStr;
+    if (!group) continue;
+
     const subject = subjectColIdx >= 0 && row[subjectColIdx] ? String(row[subjectColIdx]).trim() : undefined;
     const idVal = row[idColIdx] !== undefined ? parseInt(String(row[idColIdx]).replace(/\D/g, ''), 10) || r : r;
 
@@ -93,10 +153,10 @@ export function parseExcelWorkbook(data: ArrayBuffer | Uint8Array, fileName: str
 
     for (let q = 1; q <= 75; q++) {
       const colIdx = questionColMap[q];
-      if (colIdx !== undefined && row[colIdx] !== undefined) {
-        const numVal = parseFloat(String(row[colIdx]));
-        if (!isNaN(numVal) && numVal >= 1 && numVal <= 5) {
-          answers[q] = numVal;
+      if (colIdx !== undefined) {
+        const parsedVal = parseAnswerValue(row[colIdx]);
+        if (parsedVal !== null) {
+          answers[q] = parsedVal;
           answerCount++;
         }
       }
@@ -115,7 +175,7 @@ export function parseExcelWorkbook(data: ArrayBuffer | Uint8Array, fileName: str
   }
 
   if (records.length === 0) {
-    throw new Error('Geen geldige rijen met antwoorden (1 t/m 5) gevonden in het invoerblad.');
+    throw new Error('Geen geldige rijen met antwoorden (1 t/m 5 of schaalteksten) gevonden in het werkblad.');
   }
 
   const groups = Array.from(groupSet).sort((a, b) => {

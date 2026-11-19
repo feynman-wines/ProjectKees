@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { ALL_QUESTIONS, SCALE_DEFINITIONS } from './data/surveyDefinitions';
 import { RespondentRecord, ScaleDefinition } from './types/survey';
-import { generateRealisticSampleDataset } from './utils/sampleDataGenerator';
+import { REAL_DATASET } from './data/realDataset';
 import { 
   calculateGroupStats, 
   buildComparisonList 
@@ -28,31 +28,54 @@ import { ExcelUploadModal } from './components/ExcelUploadModal';
 import { PedagogicalInsights } from './components/PedagogicalInsights';
 import { OfflineIndicator } from './components/OfflineIndicator';
 
-export default function App() {
-  // Dataset state
-  const [records, setRecords] = useState<RespondentRecord[]>(() => {
-    const mode = localStorage.getItem('zr_data_mode');
-    if (mode === 'empty') {
-      return [];
-    }
+const DATASET_VERSION = 'real-v1-328';
+
+function getInitialDataState(): {
+  records: RespondentRecord[];
+  isCustom: boolean;
+  fileName: string;
+} {
+  const savedVersion = localStorage.getItem('zr_dataset_version');
+  const mode = localStorage.getItem('zr_data_mode');
+
+  if (savedVersion !== DATASET_VERSION && mode !== 'custom') {
+    localStorage.setItem('zr_dataset_version', DATASET_VERSION);
+    localStorage.setItem('zr_data_mode', 'default');
+    localStorage.removeItem('zr_custom_records');
+    localStorage.removeItem('zr_is_custom');
+    localStorage.removeItem('zr_filename');
+    return { records: REAL_DATASET, isCustom: false, fileName: '' };
+  }
+
+  if (mode === 'empty') {
+    return { records: [], isCustom: false, fileName: '' };
+  }
+
+  if (mode === 'custom') {
     const saved = localStorage.getItem('zr_custom_records');
     if (saved) {
       try {
-        return JSON.parse(saved);
-      } catch (e) {
-        // Fallback
+        return {
+          records: JSON.parse(saved),
+          isCustom: localStorage.getItem('zr_is_custom') === 'true',
+          fileName: localStorage.getItem('zr_filename') || '',
+        };
+      } catch {
+        // Fallback to default dataset
       }
     }
-    return generateRealisticSampleDataset();
-  });
+  }
 
-  const [isCustomData, setIsCustomData] = useState<boolean>(() => {
-    return localStorage.getItem('zr_is_custom') === 'true';
-  });
+  return { records: REAL_DATASET, isCustom: false, fileName: '' };
+}
 
-  const [customFileName, setCustomFileName] = useState<string>(() => {
-    return localStorage.getItem('zr_filename') || '';
-  });
+export default function App() {
+  const initialState = useMemo(() => getInitialDataState(), []);
+
+  // Dataset state
+  const [records, setRecords] = useState<RespondentRecord[]>(initialState.records);
+  const [isCustomData, setIsCustomData] = useState<boolean>(initialState.isCustom);
+  const [customFileName, setCustomFileName] = useState<string>(initialState.fileName);
 
   // Filter state
   const [filterMode, setFilterMode] = useState<FilterMode>('student');
@@ -149,6 +172,7 @@ export default function App() {
     setRecords(newRecords);
     setIsCustomData(true);
     setCustomFileName(fileName);
+    localStorage.setItem('zr_dataset_version', DATASET_VERSION);
     localStorage.setItem('zr_data_mode', 'custom');
     localStorage.setItem('zr_custom_records', JSON.stringify(newRecords));
     localStorage.setItem('zr_is_custom', 'true');
@@ -173,22 +197,23 @@ export default function App() {
     setCustomFileName('');
     setSelectedStudentNumber('');
     setSelectedScale(null);
+    localStorage.setItem('zr_dataset_version', DATASET_VERSION);
     localStorage.setItem('zr_data_mode', 'empty');
     localStorage.removeItem('zr_custom_records');
     localStorage.removeItem('zr_is_custom');
     localStorage.removeItem('zr_filename');
   };
 
-  const handleResetToSample = () => {
-    const sample = generateRealisticSampleDataset();
-    setRecords(sample);
+  const handleResetToDefault = () => {
+    setRecords(REAL_DATASET);
     setIsCustomData(false);
     setCustomFileName('');
-    localStorage.setItem('zr_data_mode', 'sample');
+    setSelectedStudentNumber('');
+    localStorage.setItem('zr_dataset_version', DATASET_VERSION);
+    localStorage.setItem('zr_data_mode', 'default');
     localStorage.removeItem('zr_custom_records');
     localStorage.removeItem('zr_is_custom');
     localStorage.removeItem('zr_filename');
-    setSelectedStudentNumber('304918');
     setFilterMode('student');
   };
 
@@ -270,7 +295,7 @@ export default function App() {
               De applicatie is momenteel leeg
             </h2>
             <p className="text-sm text-zinc-600 max-w-md mx-auto mb-6 leading-relaxed">
-              Er zijn geen resultaten geladen. Upload het Excel-bestand met de vragenlijstresultaten (werkblad <strong>Invoerblad</strong>) om de analyse te starten.
+              Er zijn geen resultaten geladen. Upload een nieuw Excel-bestand of laad de ingebouwde vragenlijstdata (N = {REAL_DATASET.length}) opnieuw.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-3">
               <button
@@ -281,11 +306,11 @@ export default function App() {
                 <span>Upload Excel-bestand</span>
               </button>
               <button
-                onClick={handleResetToSample}
+                onClick={handleResetToDefault}
                 className="inline-flex items-center gap-2 px-4 py-2.5 rounded-lg border border-zinc-300 bg-white hover:border-[#111111] text-[#111111] font-semibold text-xs sm:text-sm transition-colors cursor-pointer"
               >
                 <RotateCcw className="w-4 h-4" />
-                <span>Voorbeelddata laden</span>
+                <span>Standaard dataset laden</span>
               </button>
             </div>
           </div>
@@ -422,7 +447,7 @@ export default function App() {
                       Respondentenoverzicht
                     </h3>
                     <p className="text-xs text-zinc-500">
-                      Alle ingelezen rijen uit het Invoerblad van het Excel-bestand
+                      Alle ingelezen respondenten uit {isCustomData && customFileName ? customFileName : 'Vragenlijst zelfregulatie (1-350)'}
                     </p>
                   </div>
                   <button
