@@ -28,7 +28,7 @@ import { ExcelUploadModal } from './components/ExcelUploadModal';
 import { PedagogicalInsights } from './components/PedagogicalInsights';
 import { OfflineIndicator } from './components/OfflineIndicator';
 
-const DATASET_VERSION = 'real-v1-328';
+const DATASET_VERSION = 'real-v2-328';
 
 function getInitialDataState(): {
   records: RespondentRecord[];
